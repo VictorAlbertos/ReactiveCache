@@ -43,3 +43,8 @@ dependencies {
   testCompile 'com.github.VictorAlbertos.Jolyglot:moshi:0.0.3'
   testCompile 'junit:junit:4.12'
 }
+
+retrolambda {
+  jdk System.getenv("JAVA8_HOME")
+  oldJdk System.getenv("JAVA6_HOME")
+}

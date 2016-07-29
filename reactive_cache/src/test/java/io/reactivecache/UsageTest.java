@@ -16,10 +16,8 @@
 
 package io.reactivecache;
 
-import io.rx_cache.MigrationCache;
 import io.rx_cache.Reply;
 import io.rx_cache.Source;
-import io.victoralbertos.jolyglot.GsonSpeaker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -374,8 +372,6 @@ public final class UsageTest {
     Observable<Reply<List<Event>>> events(boolean refresh, int page) {
       if (refresh) {
         return apiEvents.events(page)
-            .flatMap(events -> cacheProvider.evict()
-                .map(ignore -> events))
             .compose(cacheProvider.replaceAsReply(page));
       }
 

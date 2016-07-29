@@ -99,20 +99,20 @@ ProviderGroup<List<Model>> cacheProvider =
 
 ```java
 api.getModels(group)
-	.compose(cacheProvider.replace(group));
+	.compose(cacheProvider.replace(group))
 
-cacheProvider.read(group);
+cacheProvider.read(group)
 
 api.getModels(group)
-     .compose(cacheProvider.readWithLoader());	
+     .compose(cacheProvider.readWithLoader())	
      
-cacheProvider.evict(group);     
+cacheProvider.evict(group)     
 ```
 
 `evict()` is an overloaded method to evict the `provider` data for the entire collection of groups. 
 
 ```java
-cacheProvider.evict();
+cacheProvider.evict()
 ```
 
 ## Use cases

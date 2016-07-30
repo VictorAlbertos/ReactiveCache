@@ -1,3 +1,5 @@
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ReactiveCache-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4002)
+
 # ReactiveCache
 The act of caching data with **ReactiveCache** is just another transformation in the `Observable` chain. ReactiveCache's API exposes both `Transformer` and `Observable` **RxJava** types to gracefully merge the caching actions with the data stream.  
 

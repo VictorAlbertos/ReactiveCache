@@ -1,3 +1,5 @@
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ReactiveCache-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4002)
+
 # ReactiveCache
 The act of caching data with **ReactiveCache** is just another transformation in the `Observable` chain. ReactiveCache's API exposes both `Transformer` and `Observable` **RxJava** types to gracefully merge the caching actions with the data stream.  
 
@@ -24,7 +26,7 @@ allprojects {
 Add to app module *gradle.build* file
 ```gradle
 dependencies {
-    compile "com.github.VictorAlbertos.ReactiveCache:0.0.1"
+    compile "com.github.VictorAlbertos:ReactiveCache:0.0.1"
     compile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
     compile "io.reactivex:rxjava:1.1.8"
 }

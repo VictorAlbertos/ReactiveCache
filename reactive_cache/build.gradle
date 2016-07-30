@@ -44,7 +44,19 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
+String java8 = getJavaVersion(8)
+String java7 = getJavaVersion(7)
+
 retrolambda {
-  jdk System.getenv("JAVA8_HOME")
-  oldJdk System.getenv("JAVA6_HOME")
+  jdk java8
+  oldJdk java7
+  javaVersion JavaVersion.VERSION_1_7
+}
+
+String getJavaVersion(Integer v) {
+  def sout = new StringBuffer()
+  def proc = "/usr/libexec/java_home -v 1.$v".execute()
+  proc.consumeProcessOutput(sout, new StringBuffer())
+  proc.waitForOrKill(1000)
+  return sout.toString().replace("\n", "").replace("\r", "")
 }

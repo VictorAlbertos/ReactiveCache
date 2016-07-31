@@ -32,11 +32,13 @@ artifacts {
 }
 
 dependencies {
-  compile "com.github.VictorAlbertos.RxCache:core:1.6.1"
+  compile "com.github.VictorAlbertos.RxCache:core:1.6.2"
 
   compile "io.reactivex:rxjava:1.1.8"
 
   compile 'com.github.VictorAlbertos.Jolyglot:api:0.0.3'
+
+  retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
 
   testCompile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
   testCompile 'com.github.VictorAlbertos.Jolyglot:jackson:0.0.3'
@@ -44,19 +46,7 @@ dependencies {
   testCompile 'junit:junit:4.12'
 }
 
-String java8 = getJavaVersion(8)
-String java7 = getJavaVersion(7)
-
 retrolambda {
-  jdk java8
-  oldJdk java7
-  javaVersion JavaVersion.VERSION_1_7
-}
-
-String getJavaVersion(Integer v) {
-  def sout = new StringBuffer()
-  def proc = "/usr/libexec/java_home -v 1.$v".execute()
-  proc.consumeProcessOutput(sout, new StringBuffer())
-  proc.waitForOrKill(1000)
-  return sout.toString().replace("\n", "").replace("\r", "")
+  jdk System.getenv("JAVA8_HOME")
+  oldJdk System.getenv("JAVA7_HOME")
 }

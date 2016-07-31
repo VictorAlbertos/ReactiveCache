@@ -2,7 +2,7 @@ language: android
 
 jdk: oraclejdk8
 
-script: "./gradlew build"
+script: "./gradlew reactive_cache:test"
 
 android:
   components:

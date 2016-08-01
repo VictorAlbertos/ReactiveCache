@@ -216,6 +216,8 @@ class UserRepository {
     Observable<List<Event>> events(boolean pullToRefresh, int page) {
       if (pullToRefresh) {
         return apiEvents.events(page)
+            .flatMap(events -> cacheProvider.evict()
+                 .map(ignore -> events))
             .compose(cacheProvider.replace(page));
       }
 

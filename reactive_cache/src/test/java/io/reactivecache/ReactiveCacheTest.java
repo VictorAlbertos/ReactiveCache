@@ -26,7 +26,7 @@ public final class ReactiveCacheTest {
         .withKey("1");
 
     ProviderGroup<Mock> provider2 = reactiveCache.<Mock>providerGroup()
-        .withKey("1");
+        .withKey("2");
 
     TestSubscriber<Mock> subscriber = new TestSubscriber<>();
     Observable.just(new Mock())

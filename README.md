@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/VictorAlbertos/ReactiveCache.svg?branch=master)](https://travis-ci.org/VictorAlbertos/ReactiveCache)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ReactiveCache-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4002)
 
 # ReactiveCache
@@ -215,6 +216,8 @@ class UserRepository {
     Observable<List<Event>> events(boolean pullToRefresh, int page) {
       if (pullToRefresh) {
         return apiEvents.events(page)
+            .flatMap(events -> cacheProvider.evict()
+                 .map(ignore -> events))
             .compose(cacheProvider.replace(page));
       }
 

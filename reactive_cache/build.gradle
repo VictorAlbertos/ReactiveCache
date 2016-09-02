@@ -32,7 +32,7 @@ artifacts {
 }
 
 dependencies {
-  compile "com.github.VictorAlbertos.RxCache:core:1.6.2"
+  compile "com.github.VictorAlbertos.RxCache:core:1.6.4"
 
   compile "io.reactivex:rxjava:1.1.8"
 

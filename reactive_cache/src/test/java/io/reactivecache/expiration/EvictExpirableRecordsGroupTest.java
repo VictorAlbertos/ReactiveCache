@@ -28,7 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.MethodSorters;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -51,21 +50,19 @@ public final class EvictExpirableRecordsGroupTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = i + "";
 
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>providerGroup()
               .withKey(key)
-              .readWithLoader(GROUP)
-          )
-          .subscribe(subscriber);
-
-      subscriber.awaitTerminalEvent();
+              .readWithLoader(GROUP))
+          .test()
+          .awaitTerminalEvent();
     }
 
     waitTime(5000);
-    int expectedStoredMB = (int) (maxMgPersistenceCache * EvictExpirableRecordsPersistence.PERCENTAGE_MEMORY_STORED_TO_STOP);
+    int expectedStoredMB = (int) (maxMgPersistenceCache
+        * EvictExpirableRecordsPersistence.PERCENTAGE_MEMORY_STORED_TO_STOP);
     assertThat(getSizeMB(temporaryFolder.getRoot()), is(expectedStoredMB));
   }
 
@@ -74,15 +71,14 @@ public final class EvictExpirableRecordsGroupTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = i + "";
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>providerGroup()
               .expirable(false)
               .withKey(key)
               .readWithLoader(GROUP))
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     waitTime(1000);

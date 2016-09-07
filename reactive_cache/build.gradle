@@ -32,9 +32,8 @@ artifacts {
 }
 
 dependencies {
-  compile "com.github.VictorAlbertos.RxCache:core:1.6.4"
-
-  compile "io.reactivex:rxjava:1.1.8"
+  compile "com.github.VictorAlbertos.RxCache:core:1.6.6-2.x"
+  compile "io.reactivex.rxjava2:rxjava:2.0.0-RC1"
 
   compile 'com.github.VictorAlbertos.Jolyglot:api:0.0.3'
 

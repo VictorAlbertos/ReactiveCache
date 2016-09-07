@@ -16,14 +16,14 @@
 
 package io.reactivecache;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
 import io.rx_cache.ConfigProvider;
 import io.rx_cache.EvictDynamicKey;
 import io.rx_cache.EvictDynamicKeyGroup;
 import io.rx_cache.Reply;
-import io.rx_cache.internal.Locale;
 import io.rx_cache.internal.ProcessorProviders;
 import java.util.concurrent.TimeUnit;
-import rx.Observable;
 
 /**
  * Entry point to manage cache CRUD operations with groups.
@@ -32,37 +32,43 @@ import rx.Observable;
  */
 public final class ProviderGroup<T> {
   private final ProviderBuilder<T> builder;
+  private final ExceptionAdapter exceptionAdapter;
 
   ProviderGroup(ProviderBuilder<T> builder) {
     this.builder = builder;
+    this.exceptionAdapter = new ExceptionAdapter();
   }
 
   /**
    * Evict all the cached data for this provider.
    */
-  public final Observable<Void> evict() {
+  public final Observable<Object> evict() {
     return Observable.defer(() -> builder.processorProviders
-        .<Void>process(getConfigProvider(Observable.<T>just(null), "",
+        .process(getConfigProvider(Observable.error(new RuntimeException()), "",
             new EvictDynamicKey(true), false, false))
-        .onErrorResumeNext(this::nullOnRxCacheLoaderError)
+        .onErrorResumeNext(throwable -> {
+          return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
+        })
     );
   }
 
   /**
    * Evict the cached data by group.
    */
-  public final Observable<Void> evict(final Object group) {
+  public final Observable<Object> evict(final Object group) {
     return Observable.defer(() -> builder.processorProviders
-        .<Void>process(getConfigProvider(Observable.<T>just(null), group.toString(),
+        .process(getConfigProvider(Observable.error(new RuntimeException()), group.toString(),
             new EvictDynamicKeyGroup(true), false, false))
-        .onErrorResumeNext(this::nullOnRxCacheLoaderError)
+        .onErrorResumeNext(throwable -> {
+          return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
+        })
     );
   }
 
   /**
    * Replace the cached data by group based on the element emitted from the observable.
    */
-  public final Observable.Transformer<T, T> replace(final Object group) {
+  public final ObservableTransformer<T, T> replace(final Object group) {
     return loader ->
         loader.flatMap(data -> builder.processorProviders
             .process(getConfigProvider(Observable.just(data), group.toString(),
@@ -74,25 +80,18 @@ public final class ProviderGroup<T> {
    */
   public final Observable<T> read(final Object group) {
     return Observable.defer(() -> builder.processorProviders
-        .process(getConfigProvider(Observable.<T>just(null), group.toString(),
-            new EvictDynamicKeyGroup(false), false, null)));
-  }
-
-  /**
-   * Read from cache by group and return null if no data is available.
-   */
-  public final Observable<T> readNullable(final Object group) {
-    return Observable.defer(() -> builder.processorProviders
-        .<T>process(getConfigProvider(Observable.<T>just(null), group.toString(),
+        .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(), group.toString(),
             new EvictDynamicKeyGroup(false), false, null)))
-        .onErrorResumeNext(this::nullOnRxCacheLoaderError);
+        .onErrorResumeNext(error -> {
+          return exceptionAdapter.stripPlaceholderLoaderException(error);
+        });
   }
 
   /**
-   * Read from cache by group but if the is not data available then read from the loader and cache
+   * Read from cache by group but if there is not data available then read from the loader and cache
    * its element.
    */
-  public final Observable.Transformer<T, T> readWithLoader(final Object group) {
+  public final ObservableTransformer<T, T> readWithLoader(final Object group) {
     return loader -> builder.processorProviders
         .process(getConfigProvider(loader, group.toString(),
             new EvictDynamicKeyGroup(false), false, null));
@@ -102,7 +101,7 @@ public final class ProviderGroup<T> {
    * Same as {@link ProviderGroup#replace(Object)} but wrap the data in a Reply object for debug
    * purposes.
    */
-  public final Observable.Transformer<T, Reply<T>> replaceAsReply(final Object group) {
+  public final ObservableTransformer<T, Reply<T>> replaceAsReply(final Object group) {
     return loader ->
         loader.flatMap(data -> builder.processorProviders
             .process(getConfigProvider(Observable.just(data), group.toString(),
@@ -113,7 +112,7 @@ public final class ProviderGroup<T> {
    * Same as {@link ProviderGroup#readWithLoader(Object)} but wrap the data in a Reply object for
    * debug purposes.
    */
-  public final Observable.Transformer<T, Reply<T>> readWithLoaderAsReply(final Object group) {
+  public final ObservableTransformer<T, Reply<T>> readWithLoaderAsReply(final Object group) {
     return loader -> builder.processorProviders
         .process(getConfigProvider(loader, group.toString(), new EvictDynamicKeyGroup(false),
             true, null));
@@ -128,16 +127,6 @@ public final class ProviderGroup<T> {
         detailResponse,
         builder.expirable, builder.encrypted, builder.key,
         group, loader, evict);
-  }
-
-  private <E> Observable<E> nullOnRxCacheLoaderError(Throwable error) {
-    String expected = Locale.NOT_DATA_RETURN_WHEN_CALLING_OBSERVABLE_LOADER
-        + " " + builder.key;
-    if (error.getMessage().equals(expected)) {
-      return Observable.<E>just(null);
-    } else {
-      return Observable.error(error);
-    }
   }
 
   public static class ProviderBuilder<T> {

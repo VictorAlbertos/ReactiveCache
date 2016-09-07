@@ -16,6 +16,8 @@
 
 package io.reactivecache;
 
+import io.reactivex.Observable;
+import io.reactivex.observers.TestObserver;
 import io.rx_cache.Reply;
 import io.rx_cache.Source;
 import java.util.ArrayList;
@@ -26,8 +28,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
@@ -45,233 +45,175 @@ public final class UsageTest {
   @Test public void Verify_User() {
     UserRepository userRepository = new UserRepository(new ApiUser(), reactiveCache);
 
-    TestSubscriber<Boolean> subscriberIsLogged = new TestSubscriber<>();
-    userRepository.isLogged().subscribe(subscriberIsLogged);
-    subscriberIsLogged.awaitTerminalEvent();
+    TestObserver<Boolean> observerIsLogged = userRepository.isLogged().test();
+    observerIsLogged.awaitTerminalEvent();
 
-    assertThat(subscriberIsLogged.getOnNextEvents().get(0),
-        is(false));
-    subscriberIsLogged.assertValueCount(1);
-    subscriberIsLogged.assertNoErrors();
-    subscriberIsLogged.assertCompleted();
+    assertThat(observerIsLogged.values().get(0), is(false));
+    observerIsLogged.assertValueCount(1);
+    observerIsLogged.assertNoErrors();
+    observerIsLogged.assertComplete();
 
-    TestSubscriber<User> subscriberLogin = new TestSubscriber<>();
     userRepository.login("")
-        .subscribe(subscriberLogin);
-    subscriberLogin.awaitTerminalEvent();
+        .test()
+        .awaitTerminalEvent();
 
-    subscriberIsLogged = new TestSubscriber<>();
-    userRepository.isLogged()
-        .subscribe(subscriberIsLogged);
-    subscriberIsLogged.awaitTerminalEvent();
+    observerIsLogged = userRepository.isLogged().test();
+    observerIsLogged.awaitTerminalEvent();
 
-    assertThat(subscriberIsLogged.getOnNextEvents().get(0),
+    assertThat(observerIsLogged.values().get(0),
         is(true));
 
-    TestSubscriber<User> subscriberProfile = new TestSubscriber<>();
-    userRepository.profile()
-        .subscribe(subscriberProfile);
-    subscriberProfile.awaitTerminalEvent();
+    TestObserver<User> observerProfile = userRepository.profile().test();
+    observerProfile.awaitTerminalEvent();
 
-    subscriberProfile.assertNoErrors();
-    subscriberProfile.assertValueCount(1);
-    subscriberProfile.assertCompleted();
-    assertNotNull(subscriberProfile.getOnNextEvents().get(0));
+    observerProfile.assertNoErrors();
+    observerProfile.assertValueCount(1);
+    observerProfile.assertComplete();
+    assertNotNull(observerProfile.values().get(0));
 
-    TestSubscriber<User> subscriberUpdate = new TestSubscriber<>();
-    userRepository.updateUserName("aNewName")
-        .subscribe(subscriberUpdate);
-    subscriberUpdate.awaitTerminalEvent();
+    TestObserver<User> observerUpdate = userRepository.updateUserName("aNewName").test();
+    observerUpdate.awaitTerminalEvent();
 
-    subscriberUpdate.assertCompleted();
-    subscriberUpdate.assertNoErrors();
-    subscriberUpdate.assertValueCount(1);
+    observerUpdate.assertComplete();
+    observerUpdate.assertNoErrors();
+    observerUpdate.assertValueCount(1);
 
-    subscriberProfile = new TestSubscriber<>();
-    userRepository.profile()
-        .subscribe(subscriberProfile);
-    subscriberProfile.awaitTerminalEvent();
+    observerProfile = userRepository.profile().test();
+    observerProfile.awaitTerminalEvent();
 
-    subscriberProfile.assertNoErrors();
-    subscriberProfile.assertValueCount(1);
-    subscriberProfile.assertCompleted();
-    assertNotNull(subscriberProfile.getOnNextEvents().get(0).getName(),
+    observerProfile.assertNoErrors();
+    observerProfile.assertValueCount(1);
+    observerProfile.assertComplete();
+    assertNotNull(observerProfile.values().get(0).getName(),
         is("aNewName"));
 
-    TestSubscriber<Void> subscriberLogout = new TestSubscriber<>();
-    userRepository.logout()
-        .subscribe(subscriberLogout);
-    subscriberLogout.awaitTerminalEvent();
+    TestObserver<Object> observerLogout = userRepository.logout().test();
+    observerLogout.awaitTerminalEvent();
 
-    subscriberLogout.assertNoErrors();
-    subscriberLogout.assertValueCount(1);
-    subscriberLogout.assertCompleted();
+    observerLogout.assertNoErrors();
+    observerLogout.assertValueCount(1);
+    observerLogout.assertComplete();
 
-    subscriberIsLogged = new TestSubscriber<>();
-    userRepository.isLogged().subscribe(subscriberIsLogged);
-    subscriberIsLogged.awaitTerminalEvent();
+    observerIsLogged = userRepository.isLogged().test();
+    observerIsLogged.awaitTerminalEvent();
 
-    assertThat(subscriberIsLogged.getOnNextEvents().get(0),
-        is(false));
+    assertThat(observerIsLogged.values().get(0), is(false));
   }
 
   @Test public void Verify_Tasks() {
     TasksRepository tasksRepository = new TasksRepository(new ApiTasks(), reactiveCache);
 
-    TestSubscriber<Reply<List<Task>>> subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(false)
-      .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
+    TestObserver<Reply<List<Task>>> observerTasks = tasksRepository.tasks(false).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(),
         is(Source.CLOUD));
 
-    subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(false)
-        .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
+    observerTasks = tasksRepository.tasks(false).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(),
         is(Source.MEMORY));
 
-    subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(true)
-        .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
+    observerTasks = tasksRepository.tasks(true).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(),
         is(Source.CLOUD));
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getData().size(),
+    assertThat(observerTasks.values().get(0).getData().size(),
         is(0));
 
-    TestSubscriber<Void> subscriberAddTask = new TestSubscriber<>();
+    TestObserver<Object> observerAddTask = tasksRepository.addTask("", "").test();
+    observerAddTask.awaitTerminalEvent();
 
-    tasksRepository.addTask("", "")
-        .subscribe(subscriberAddTask);
-    subscriberAddTask.awaitTerminalEvent();
+    observerAddTask.assertComplete();
+    observerAddTask.assertNoErrors();
+    observerAddTask.assertValueCount(1);
 
-    subscriberAddTask.assertCompleted();
-    subscriberAddTask.assertNoErrors();
-    subscriberAddTask.assertValueCount(1);
+    observerTasks = tasksRepository.tasks(false).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(false)
-        .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(), is(Source.MEMORY));
+    assertThat(observerTasks.values().get(0).getData().size(), is(1));
 
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
-        is(Source.MEMORY));
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getData().size(),
-        is(1));
+    TestObserver<Object> observerRemoveTask = tasksRepository.removeTask(1).test();
 
-    TestSubscriber<Void> subscriberRemoveTask = new TestSubscriber<>();
-    tasksRepository.removeTask(1)
-        .subscribe(subscriberRemoveTask);
+    observerRemoveTask.assertComplete();
+    observerRemoveTask.assertNoErrors();
+    observerRemoveTask.assertValueCount(1);
 
-    subscriberRemoveTask.assertCompleted();
-    subscriberRemoveTask.assertNoErrors();
-    subscriberRemoveTask.assertValueCount(1);
+    observerTasks = tasksRepository.tasks(false).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(false)
-        .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(), is(Source.MEMORY));
+    assertThat(observerTasks.values().get(0).getData().size(), is(0));
 
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
-        is(Source.MEMORY));
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getData().size(),
-        is(0));
+    observerTasks = tasksRepository.tasks(true).test();
+    observerTasks.awaitTerminalEvent();
 
-    subscriberTasks = new TestSubscriber<>();
-    tasksRepository.tasks(true)
-        .subscribe(subscriberTasks);
-    subscriberTasks.awaitTerminalEvent();
-
-    subscriberTasks.assertCompleted();
-    subscriberTasks.assertNoErrors();
-    subscriberTasks.assertValueCount(1);
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getSource(),
-        is(Source.CLOUD));
-    assertThat(subscriberTasks.getOnNextEvents().get(0).getData().size(),
-        is(0));
+    observerTasks.assertComplete();
+    observerTasks.assertNoErrors();
+    observerTasks.assertValueCount(1);
+    assertThat(observerTasks.values().get(0).getSource(), is(Source.CLOUD));
+    assertThat(observerTasks.values().get(0).getData().size(), is(0));
   }
 
   @Test public void Verify_Events() {
     EventsRepository eventsRepository = new EventsRepository(new ApiEvents(), reactiveCache);
-    TestSubscriber<Reply<List<Event>>> subscriberEvents = new TestSubscriber<>();
+    TestObserver<Reply<List<Event>>> observerEvents = eventsRepository.events(false, 1).test();
+    observerEvents.awaitTerminalEvent();
 
-    eventsRepository.events(false, 1)
-        .subscribe(subscriberEvents);
-    subscriberEvents.awaitTerminalEvent();
+    observerEvents.assertComplete();
+    observerEvents.assertNoErrors();
+    observerEvents.assertValueCount(1);
 
-    subscriberEvents.assertCompleted();
-    subscriberEvents.assertNoErrors();
-    subscriberEvents.assertValueCount(1);
+    assertThat(observerEvents.values().get(0).getData().size(), is(1));
+    assertThat(observerEvents.values().get(0).getSource(), is(Source.CLOUD));
 
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getData().size(),
-        is(1));
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getSource(),
-        is(Source.CLOUD));
+    observerEvents = eventsRepository.events(false, 2).test();
+    observerEvents.awaitTerminalEvent();
 
-    subscriberEvents = new TestSubscriber<>();
+    observerEvents.assertComplete();
+    observerEvents.assertNoErrors();
+    observerEvents.assertValueCount(1);
 
-    eventsRepository.events(false, 2)
-        .subscribe(subscriberEvents);
-    subscriberEvents.awaitTerminalEvent();
+    assertThat(observerEvents.values().get(0).getData().size(), is(2));
+    assertThat(observerEvents.values().get(0).getSource(), is(Source.CLOUD));
 
-    subscriberEvents.assertCompleted();
-    subscriberEvents.assertNoErrors();
-    subscriberEvents.assertValueCount(1);
+    observerEvents = eventsRepository.events(false, 1).test();
+    observerEvents.awaitTerminalEvent();
 
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getData().size(),
-        is(2));
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getSource(),
-        is(Source.CLOUD));
+    observerEvents.assertComplete();
+    observerEvents.assertNoErrors();
+    observerEvents.assertValueCount(1);
 
-    subscriberEvents = new TestSubscriber<>();
+    assertThat(observerEvents.values().get(0).getData().size(), is(1));
+    assertThat(observerEvents.values().get(0).getSource(), is(Source.MEMORY));
 
-    eventsRepository.events(false, 1)
-        .subscribe(subscriberEvents);
-    subscriberEvents.awaitTerminalEvent();
+    observerEvents = eventsRepository.events(false, 2).test();
+    observerEvents.awaitTerminalEvent();
 
-    subscriberEvents.assertCompleted();
-    subscriberEvents.assertNoErrors();
-    subscriberEvents.assertValueCount(1);
+    observerEvents.assertComplete();
+    observerEvents.assertNoErrors();
+    observerEvents.assertValueCount(1);
 
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getData().size(),
-        is(1));
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getSource(),
-        is(Source.MEMORY));
-
-    subscriberEvents = new TestSubscriber<>();
-
-    eventsRepository.events(false, 2)
-        .subscribe(subscriberEvents);
-    subscriberEvents.awaitTerminalEvent();
-
-    subscriberEvents.assertCompleted();
-    subscriberEvents.assertNoErrors();
-    subscriberEvents.assertValueCount(1);
-
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getData().size(),
-        is(2));
-    assertThat(subscriberEvents.getOnNextEvents().get(0).getSource(),
-        is(Source.MEMORY));
+    assertThat(observerEvents.values().get(0).getData().size(), is(2));
+    assertThat(observerEvents.values().get(0).getSource(), is(Source.MEMORY));
   }
 
   /**
@@ -293,8 +235,9 @@ public final class UsageTest {
     }
 
     Observable<Boolean> isLogged() {
-      return cacheProvider.readNullable()
-          .map(user -> user != null);
+      return cacheProvider.read()
+          .map(user -> true)
+          .onErrorReturn(observer -> false);
     }
 
     Observable<User> profile() {
@@ -307,9 +250,9 @@ public final class UsageTest {
           .compose(cacheProvider.replace());
     }
 
-    Observable<Void> logout() {
+    Observable<Object> logout() {
       return api.logout()
-          .flatMap(ignore -> cacheProvider.evict());
+          .flatMap(i -> cacheProvider.evict());
     }
   }
 
@@ -326,33 +269,28 @@ public final class UsageTest {
           .withKey("tasks");
     }
 
-    /**
-     * If refresh true, call to the server and replace the cache with the data emitted by the observable.
-     * If refresh false, use the cache if data is available otherwise call the server and cached the
-     * new emitted data.
-     */
     Observable<Reply<List<Task>>> tasks(boolean refresh) {
       return refresh ? api.tasks().compose(cacheProvider.replaceAsReply())
           : api.tasks().compose(cacheProvider.readWithLoaderAsReply());
     }
 
-    Observable<Void> addTask(String name, String desc) {
+    Observable<Object> addTask(String name, String desc) {
       return api.addTask(name, desc)
           .flatMap(newTask ->
               cacheProvider.read()
                   .doOnNext(tasks -> tasks.add(newTask)))
           .compose(cacheProvider.replace())
-          .map(ignore -> null);
+          .flatMap(ignore -> Observable.just(0));
     }
 
-    Observable<Void> removeTask(int id) {
+    Observable<Object> removeTask(int id) {
       return api.removeTask(id)
           .flatMap(ignore -> cacheProvider.read())
           .flatMapIterable(tasks -> tasks)
           .filter(task -> task.getId() != id)
           .toList()
           .compose(cacheProvider.replace())
-          .map(ignore -> null);
+          .flatMap(ignore -> Observable.just(0));
     }
   }
 
@@ -415,8 +353,8 @@ public final class UsageTest {
       return Observable.just(new User());
     }
 
-    public Observable<Void> logout() {
-      return Observable.just(null);
+    public Observable<Object> logout() {
+      return Observable.just(0);
     }
   }
 
@@ -437,13 +375,13 @@ public final class UsageTest {
       return Observable.just(task);
     }
 
-    public Observable<Void> removeTask(int id) {
+    public Observable<Object> removeTask(int id) {
       Task candidate = null;
       for (Task task : tasks) {
         if (task.getId() == id) candidate = task;
       }
       tasks.remove(candidate);
-      return Observable.just(null);
+      return Observable.just(0);
     }
   }
 
@@ -452,7 +390,6 @@ public final class UsageTest {
       put(1, Arrays.asList(new Event()));
       put(2, Arrays.asList(new Event(), new Event()));
     }};
-
 
     public Observable<List<Event>> events(int page) {
       return Observable.just(events.get(page));

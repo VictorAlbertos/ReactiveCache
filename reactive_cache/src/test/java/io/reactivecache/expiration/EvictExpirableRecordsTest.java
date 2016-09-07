@@ -20,6 +20,7 @@ import io.reactivecache.Jolyglot$;
 import io.reactivecache.Mock;
 import io.reactivecache.ReactiveCache;
 import io.reactivecache.common.BaseTestEvictingTask;
+import io.reactivex.observers.TestObserver;
 import io.rx_cache.internal.cache.EvictExpirableRecordsPersistence;
 import java.util.List;
 import org.junit.Before;
@@ -28,7 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.MethodSorters;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -51,21 +51,19 @@ public final class EvictExpirableRecordsTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = i + "";
 
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>provider()
               .withKey(key)
-              .readWithLoader()
-          )
-          .subscribe(subscriber);
-
-      subscriber.awaitTerminalEvent();
+              .readWithLoader())
+          .test()
+          .awaitTerminalEvent();
     }
 
     waitTime(5000);
-    int expectedStoredMB = (int) (maxMgPersistenceCache * EvictExpirableRecordsPersistence.PERCENTAGE_MEMORY_STORED_TO_STOP);
+    int expectedStoredMB = (int) (maxMgPersistenceCache
+        * EvictExpirableRecordsPersistence.PERCENTAGE_MEMORY_STORED_TO_STOP);
     assertThat(getSizeMB(temporaryFolder.getRoot()), is(expectedStoredMB));
   }
 
@@ -74,15 +72,14 @@ public final class EvictExpirableRecordsTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = i + "";
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>provider()
               .expirable(false)
               .withKey(key)
               .readWithLoader())
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     waitTime(1000);

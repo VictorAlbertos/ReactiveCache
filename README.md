@@ -142,8 +142,9 @@ class UserRepository {
     }
 
     Observable<Boolean> isLogged() {
-      return cacheProvider.readNullable()
-          .map(user -> user != null);
+      return cacheProvider.read()
+          .map(user -> true)
+          .onErrorReturn(observer -> false);
     }
 
     Observable<User> profile() {
@@ -156,7 +157,7 @@ class UserRepository {
           .compose(cacheProvider.replace());
     }
 
-    Observable<Void> logout() {
+    Observable<Object> logout() {
       return api.logout()
           .flatMap(ignore -> cacheProvider.evict());
     }
@@ -175,28 +176,28 @@ class UserRepository {
           .withKey("tasks");
     }
 
-    Observable<List<Task>> tasks(boolean pullToRefresh) {
-      return pullToRefresh ? api.tasks().compose(cacheProvider.replace())
-          : api.tasks().compose(cacheProvider.readWithLoader());
+    Observable<Reply<List<Task>>> tasks(boolean refresh) {
+      return refresh ? api.tasks().compose(cacheProvider.replaceAsReply())
+          : api.tasks().compose(cacheProvider.readWithLoaderAsReply());
     }
 
-    Observable<Void> addTask(String name, String desc) {
+    Observable<Object> addTask(String name, String desc) {
       return api.addTask(name, desc)
           .flatMap(newTask ->
               cacheProvider.read()
                   .doOnNext(tasks -> tasks.add(newTask)))
           .compose(cacheProvider.replace())
-          .map(ignore -> null);
+          .flatMap(ignore -> Observable.just(0));
     }
 
-    Observable<Void> removeTask(int id) {
+    Observable<Object> removeTask(int id) {
       return api.removeTask(id)
           .flatMap(ignore -> cacheProvider.read())
           .flatMapIterable(tasks -> tasks)
           .filter(task -> task.getId() != id)
           .toList()
           .compose(cacheProvider.replace())
-          .map(ignore -> null);
+          .flatMap(ignore -> Observable.just(0));
     }
   }
 ```
@@ -213,16 +214,14 @@ class UserRepository {
           .withKey("events");
     }
 
-    Observable<List<Event>> events(boolean pullToRefresh, int page) {
-      if (pullToRefresh) {
+    Observable<Reply<List<Event>>> events(boolean refresh, int page) {
+      if (refresh) {
         return apiEvents.events(page)
-            .flatMap(events -> cacheProvider.evict()
-                 .map(ignore -> events))
-            .compose(cacheProvider.replace(page));
+            .compose(cacheProvider.replaceAsReply(page));
       }
 
       return apiEvents.events(page)
-          .compose(cacheProvider.readWithLoader(page));
+          .compose(cacheProvider.readWithLoaderAsReply(page));
     }
   }
 ```

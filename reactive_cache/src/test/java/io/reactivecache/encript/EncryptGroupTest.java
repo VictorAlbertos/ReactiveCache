@@ -20,6 +20,8 @@ import io.reactivecache.Jolyglot$;
 import io.reactivecache.Mock;
 import io.reactivecache.ProviderGroup;
 import io.reactivecache.ReactiveCache;
+import io.reactivex.Observable;
+import io.reactivex.observers.TestObserver;
 import io.rx_cache.Reply;
 import io.rx_cache.Source;
 import java.util.ArrayList;
@@ -30,8 +32,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.MethodSorters;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -57,54 +57,47 @@ public final class EncryptGroupTest {
   }
 
   @Test public void _00_Save_Record_On_Disk_In_Order_To_Test_Following_Tests() {
-    TestSubscriber<Reply<List<Mock>>> subscriber = new TestSubscriber<>();
-    createObservableMocks(SIZE)
+    TestObserver<Reply<List<Mock>>> observer = createObservableMocks(SIZE)
         .compose(mocksEncryptedProvider.readWithLoaderAsReply(GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber = new TestSubscriber<>();
-    createObservableMocks(SIZE)
+    observer = createObservableMocks(SIZE)
         .compose(mocksNoEncryptedProvider.readWithLoaderAsReply(GROUP))
-        .subscribe(subscriber);
+        .test();
 
-    subscriber.awaitTerminalEvent();
+    observer.awaitTerminalEvent();
   }
 
   @Test public void _01_When_Encrypted_Record_Has_Been_Persisted_And_Memory_Has_Been_Destroyed_Then_Retrieve_From_Disk() {
-    TestSubscriber<Reply<List<Mock>>> subscriber = new TestSubscriber<>();
-    Observable.<List<Mock>>just(null)
+    TestObserver<Reply<List<Mock>>> observer = Observable.<List<Mock>>just(new ArrayList<>())
         .compose(mocksEncryptedProvider.readWithLoaderAsReply(GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    Reply<List<Mock>> reply = subscriber.getOnNextEvents().get(0);
+    Reply<List<Mock>> reply = observer.values().get(0);
     assertThat(reply.getSource(), is(Source.PERSISTENCE));
     assertThat(reply.isEncrypted(), is(true));
   }
 
   @Test public void _02_Verify_Encrypted_Does_Not_Propagate_To_Other_Providers() {
-    TestSubscriber<Reply<List<Mock>>> subscriber = new TestSubscriber<>();
-
-    createObservableMocks(SIZE)
+    TestObserver<Reply<List<Mock>>> observer = createObservableMocks(SIZE)
         .compose(mocksEncryptedProvider.readWithLoaderAsReply(GROUP))
-        .subscribe(subscriber);
+        .test();
 
-    subscriber.awaitTerminalEvent();
+    observer.awaitTerminalEvent();
 
-    Reply<List<Mock>> reply = subscriber.getOnNextEvents().get(0);
+    Reply<List<Mock>> reply = observer.values().get(0);
     assertThat(reply.getSource(), is(Source.PERSISTENCE));
     assertThat(reply.isEncrypted(), is(true));
 
-    subscriber = new TestSubscriber<>();
-    createObservableMocks(SIZE)
-        .compose(mocksNoEncryptedProvider
-            .readWithLoaderAsReply(GROUP))
-        .subscribe(subscriber);
+    observer =  createObservableMocks(SIZE)
+        .compose(mocksNoEncryptedProvider.readWithLoaderAsReply(GROUP))
+        .test();
 
-    subscriber.awaitTerminalEvent();
+    observer.awaitTerminalEvent();
 
-    reply = subscriber.getOnNextEvents().get(0);
+    reply = observer.values().get(0);
     assertThat(reply.getSource(), is(Source.PERSISTENCE));
     assertThat(reply.isEncrypted(), is(false));
   }

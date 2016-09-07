@@ -16,6 +16,8 @@
 
 package io.reactivecache;
 
+import io.reactivex.Observable;
+import io.reactivex.observers.TestObserver;
 import io.rx_cache.Reply;
 import io.rx_cache.RxCacheException;
 import io.rx_cache.Source;
@@ -24,8 +26,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -45,27 +45,21 @@ public final class ProviderGroupTest {
   }
 
   @Test public void When_Evict_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict().test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict()
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
   }
 
   @Test public void When_Evict_By_Group_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
   }
 
   @Test public void When_Evict_With_Cached_Data_Then_Evict_Data() {
@@ -75,15 +69,12 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict().test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict()
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
     verifyNoMockCached(MESSAGE_GROUP+2);
@@ -96,15 +87,12 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP+2);
@@ -124,15 +112,12 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict().test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict()
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
     verifyNoMockCached(MESSAGE_GROUP+2);
@@ -152,15 +137,12 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestSubscriber<Void> subscriber = new TestSubscriber<>();
+    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.evict(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    subscriber.assertCompleted();
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP+2);
@@ -170,15 +152,13 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
-    Observable.<Mock>error(new RuntimeException())
+    TestObserver<Mock> observer = Observable.<Mock>error(new RuntimeException())
         .compose(cacheProvider.replace(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertError(RuntimeException.class);
-    subscriber.assertNoValues();
+    observer.assertError(RuntimeException.class);
+    observer.assertNoValues();
 
     verifyMockCached(MESSAGE_GROUP);
   }
@@ -187,82 +167,43 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
-    Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Observable.just(new Mock("1"))
         .compose(cacheProvider.replace(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertValueCount(1);
-    subscriber.assertNoErrors();
-    subscriber.assertCompleted();
+    observer.assertValueCount(1);
+    observer.assertNoErrors();
+    observer.assertComplete();
 
-    subscriber = new TestSubscriber<>();
+    observer = cacheProvider.read(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.read(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertValueCount(1);
-    subscriber.assertNoErrors();
-    subscriber.assertCompleted();
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertValueCount(1);
+    observer.assertNoErrors();
+    observer.assertComplete();
+    assertThat(observer.values()
         .get(0).getMessage(), is("1"));
   }
 
-  @Test public void When_Read_Nullable_With_Nothing_To_Read_Then_Return_Null() {
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
-    cacheProvider.readNullable(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertValueCount(1);
-    subscriber.assertNoErrors();
-    subscriber.assertCompleted();
-  }
-
-  @Test public void When_Read_Nullable_Then_Return_Data() {
-    saveMock(MESSAGE_GROUP);
-
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
-    cacheProvider.readNullable(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertValueCount(1);
-    subscriber.assertNoErrors();
-    subscriber.assertCompleted();
-    assertThat(subscriber.getOnNextEvents()
-        .get(0).getMessage(), is(MESSAGE_GROUP));
-  }
-
   @Test public void When_Read_With_Nothing_To_Read_Then_Throw() {
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
+    TestObserver<Mock> observer = cacheProvider.read(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.read(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertError(RxCacheException.class);
-    subscriber.assertNoValues();
+    observer.assertError(RxCacheException.class);
+    observer.assertNoValues();
   }
 
   @Test public void When_Read_Then_Return_Data() {
     saveMock(MESSAGE_GROUP);
 
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
+    TestObserver<Mock> observer = cacheProvider.read(MESSAGE_GROUP).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.read(MESSAGE_GROUP)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertValueCount(1);
-    subscriber.assertNoErrors();
-    subscriber.assertCompleted();
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertValueCount(1);
+    observer.assertNoErrors();
+    observer.assertComplete();
+    assertThat(observer.values()
         .get(0).getMessage(), is(MESSAGE_GROUP));
   }
 
@@ -273,40 +214,36 @@ public final class ProviderGroupTest {
 
     saveMock(MESSAGE_GROUP);
 
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
-    Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Observable.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getMessage(), is(MESSAGE_GROUP));
 
     waitTime(200);
 
-    subscriber = new TestSubscriber<>();
-
-    Observable.just(new Mock("1"))
+    observer = Observable.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getMessage(), is("1"));
 
-    Observable.just(new Mock("3"))
+    observer = Observable.just(new Mock("3"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getMessage(), is("1"));
   }
 
@@ -317,30 +254,26 @@ public final class ProviderGroupTest {
 
     saveMock(MESSAGE_GROUP);
 
-    TestSubscriber<Reply<Mock>> subscriber = new TestSubscriber<>();
-
-    Observable.just(new Mock(MESSAGE_GROUP))
+    TestObserver<Reply<Mock>> observer = Observable.just(new Mock(MESSAGE_GROUP))
         .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getSource(), is(Source.MEMORY));
 
     waitTime(200);
 
-    subscriber = new TestSubscriber<>();
-
-    Observable.just(new Mock(MESSAGE_GROUP))
+    observer = Observable.just(new Mock(MESSAGE_GROUP))
         .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getSource(), is(Source.CLOUD));
   }
 
@@ -348,85 +281,68 @@ public final class ProviderGroupTest {
     ProviderGroup<Mock> mockProvider = reactiveCache.<Mock>providerGroup()
         .withKey("mocks");
 
-    TestSubscriber<Mock> subscriber;
+    TestObserver<Mock> observer;
 
     Mock mockPage1 = new Mock("1");
 
-    subscriber = new TestSubscriber<>();
-    Observable.just(mockPage1)
+    observer = Observable.just(mockPage1)
         .compose(mockProvider.replace("1"))
-        .subscribe(subscriber);
+        .test();
 
-    subscriber.awaitTerminalEvent();
+    observer.awaitTerminalEvent();
 
     Mock mockPage2 = new Mock("2");
 
-    subscriber = new TestSubscriber<>();
-    Observable.just(mockPage2)
+    observer = Observable.just(mockPage2)
         .compose(mockProvider.replace("2"))
-        .subscribe(subscriber);
+        .test();
 
-    subscriber.awaitTerminalEvent();
+    observer.awaitTerminalEvent();
 
     Mock mockPage3 = new Mock("3");
 
-    subscriber = new TestSubscriber<>();
-    Observable.just(mockPage3)
+    observer = Observable.just(mockPage3)
         .compose(mockProvider.replace("3"))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test();
+    observer.awaitTerminalEvent();
 
-    subscriber = new TestSubscriber<>();
-    mockProvider.read("1")
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-    assertThat(subscriber.getOnNextEvents().get(0).getMessage(), is("1"));
+    observer = mockProvider.read("1").test();
+    observer.awaitTerminalEvent();
+    assertThat(observer.values().get(0).getMessage(), is("1"));
 
-    subscriber = new TestSubscriber<>();
-    mockProvider.read("2")
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-    assertThat(subscriber.getOnNextEvents().get(0).getMessage(), is("2"));
+    observer = mockProvider.read("2").test();
+    observer.awaitTerminalEvent();
+    assertThat(observer.values().get(0).getMessage(), is("2"));
 
-    subscriber = new TestSubscriber<>();
-    mockProvider.read("3")
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-    assertThat(subscriber.getOnNextEvents().get(0).getMessage(), is("3"));
+    observer = mockProvider.read("3").test();
+    observer.awaitTerminalEvent();
+    assertThat(observer.values().get(0).getMessage(), is("3"));
   }
 
   private void saveMock(String messageGroup) {
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
-
     Observable.just(new Mock(messageGroup))
         .compose(cacheProvider.replace(messageGroup))
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
+        .test()
+        .awaitTerminalEvent();
   }
 
   private void verifyMockCached(String messageGroup) {
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
+    TestObserver<Mock> observer = cacheProvider.read(messageGroup).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.read(messageGroup)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertNoErrors();
-    subscriber.assertValueCount(1);
-    assertThat(subscriber.getOnNextEvents()
+    observer.assertNoErrors();
+    observer.assertValueCount(1);
+    assertThat(observer.values()
         .get(0).getMessage(), is(messageGroup));
   }
 
   private void verifyNoMockCached(String group) {
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
+    TestObserver<Mock> observer = cacheProvider.read(group).test();
+    observer.awaitTerminalEvent();
 
-    cacheProvider.read(group)
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
-    subscriber.assertError(RxCacheException.class);
-    subscriber.assertNoValues();
-    subscriber.onCompleted();
+    observer.assertError(RxCacheException.class);
+    observer.assertNoValues();
+    observer.onComplete();
   }
 
   private void waitTime(long millis) {

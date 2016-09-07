@@ -17,17 +17,17 @@
 package io.reactivecache.migration;
 
 import io.reactivecache.Jolyglot$;
+import io.reactivecache.ReactiveCache;
+import io.reactivex.Observable;
+import io.reactivex.observers.TestObserver;
 import io.rx_cache.MigrationCache;
 import io.rx_cache.RxCacheException;
-import io.reactivecache.ReactiveCache;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -49,15 +49,14 @@ public final class MigrationsTest {
         ))
         .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
 
-    TestSubscriber<List<Mock1>> testSubscriber = new TestSubscriber<>();
-    reactiveCache.<List<Mock1>>provider()
+    TestObserver<List<Mock1>> testObserver = reactiveCache.<List<Mock1>>provider()
         .withKey("getMocks")
         .read()
-        .subscribe(testSubscriber);
+        .test();
 
-    testSubscriber.awaitTerminalEvent();
-    testSubscriber.assertNoValues();
-    testSubscriber.assertError(RxCacheException.class);
+    testObserver.awaitTerminalEvent();
+    testObserver.assertNoValues();
+    testObserver.assertError(RxCacheException.class);
   }
 
 
@@ -65,17 +64,14 @@ public final class MigrationsTest {
     ReactiveCache reactiveCache = new ReactiveCache.Builder()
         .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
 
-    TestSubscriber<List<Mock1>> testSubscriber = new TestSubscriber<>();
-
-    getMocks()
+    TestObserver<List<Mock1>> testObserver =  getMocks()
         .compose(reactiveCache.<List<Mock1>>provider()
             .withKey("getMocks")
-            .readWithLoader()
-        )
-        .subscribe(testSubscriber);
+            .readWithLoader())
+        .test();
 
-    testSubscriber.awaitTerminalEvent();
-    assertThat(testSubscriber.getOnNextEvents().get(0).size(), is(SIZE_MOCKS));
+    testObserver.awaitTerminalEvent();
+    assertThat(testObserver.values().get(0).size(), is(SIZE_MOCKS));
   }
 
   private static int SIZE_MOCKS = 1000;

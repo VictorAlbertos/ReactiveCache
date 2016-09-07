@@ -16,13 +16,13 @@
 
 package io.reactivecache;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
 import io.rx_cache.ConfigProvider;
 import io.rx_cache.EvictDynamicKey;
 import io.rx_cache.Reply;
-import io.rx_cache.internal.Locale;
 import io.rx_cache.internal.ProcessorProviders;
 import java.util.concurrent.TimeUnit;
-import rx.Observable;
 
 /**
  * Entry point to manage cache CRUD operations.
@@ -31,27 +31,31 @@ import rx.Observable;
  */
 public final class Provider<T> {
   private final ProviderBuilder<T> builder;
+  private final ExceptionAdapter exceptionAdapter;
 
   Provider(ProviderBuilder<T> builder) {
     this.builder = builder;
+    this.exceptionAdapter = new ExceptionAdapter();
   }
 
   /**
    * Evict all the cached data for this provider.
    */
-  public final Observable<Void> evict() {
+  public final Observable<Object> evict() {
     return Observable.defer(() ->
         builder.processorProviders
-            .<Void>process(getConfigProvider(Observable.<T>just(null),
+            .process(getConfigProvider(Observable.error(new RuntimeException()),
                 new EvictDynamicKey(true), false, false))
-            .onErrorResumeNext(this::nullOnRxCacheLoaderError)
+            .onErrorResumeNext(throwable -> {
+              return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
+            })
     );
   }
 
   /**
    * Replace the cached data by the element emitted from the observable.
    */
-  public final Observable.Transformer<T, T> replace() {
+  public final ObservableTransformer<T, T> replace() {
     return loader ->
         loader.flatMap(data -> builder.processorProviders
             .process(getConfigProvider(Observable.just(data),
@@ -63,25 +67,18 @@ public final class Provider<T> {
    */
   public final Observable<T> read() {
     return Observable.defer(() -> builder.processorProviders
-        .process(getConfigProvider(Observable.<T>just(null),
-            new EvictDynamicKey(false), false, null)));
-  }
-
-  /**
-   * Read from cache and return null if no data is available.
-   */
-  public final Observable<T> readNullable() {
-    return Observable.defer(() -> builder.processorProviders
-        .<T>process(getConfigProvider(Observable.<T>just(null),
+        .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(),
             new EvictDynamicKey(false), false, null)))
-        .onErrorResumeNext(this::nullOnRxCacheLoaderError);
+        .onErrorResumeNext(error -> {
+          return exceptionAdapter.stripPlaceholderLoaderException(error);
+        });
   }
 
   /**
    * Read from cache but if there is not data available then read from the loader and cache its
    * element.
    */
-  public final Observable.Transformer<T, T> readWithLoader() {
+  public final ObservableTransformer<T, T> readWithLoader() {
     return loader -> builder.processorProviders
         .process(getConfigProvider(loader, new EvictDynamicKey(false), false, null));
   }
@@ -89,7 +86,7 @@ public final class Provider<T> {
   /**
    * Same as {@link Provider#replace()} but wrap the data in a Reply object for debug purposes.
    */
-  public final Observable.Transformer<T, Reply<T>> replaceAsReply() {
+  public final ObservableTransformer<T, Reply<T>> replaceAsReply() {
     return loader ->
         loader.flatMap(data -> builder.processorProviders
             .process(getConfigProvider(Observable.just(data),
@@ -100,7 +97,7 @@ public final class Provider<T> {
    * Same as {@link Provider#readWithLoader()} but wrap the data in a Reply object for debug
    * purposes.
    */
-  public final Observable.Transformer<T, Reply<T>> readWithLoaderAsReply() {
+  public final ObservableTransformer<T, Reply<T>> readWithLoaderAsReply() {
     return loader -> builder.processorProviders
         .process(getConfigProvider(loader, new EvictDynamicKey(false), true, null));
   }
@@ -114,16 +111,6 @@ public final class Provider<T> {
         detailResponse,
         builder.expirable, builder.encrypted, builder.key,
         "", loader, evict);
-  }
-
-  private <E> Observable<E> nullOnRxCacheLoaderError(Throwable error) {
-    String expected = Locale.NOT_DATA_RETURN_WHEN_CALLING_OBSERVABLE_LOADER
-        + " " + builder.key;
-    if (error.getMessage().equals(expected)) {
-      return Observable.<E>just(null);
-    } else {
-      return Observable.error(error);
-    }
   }
 
   public static class ProviderBuilder<T> {

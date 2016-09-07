@@ -29,7 +29,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.MethodSorters;
-import rx.observers.TestSubscriber;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -51,7 +50,6 @@ public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
 
       createObservableMocks()
@@ -59,8 +57,8 @@ public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
                     .lifeCache(1, TimeUnit.MILLISECONDS)
                     .withKey(key)
                     .readWithLoader(GROUP))
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));
@@ -78,15 +76,14 @@ public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>providerGroup()
               .withKey(key)
               .readWithLoader(GROUP)
           )
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));
@@ -103,7 +100,6 @@ public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>providerGroup()
@@ -111,8 +107,8 @@ public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
               .lifeCache(1, TimeUnit.MILLISECONDS)
               .withKey(key)
               .readWithLoader(GROUP))
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));

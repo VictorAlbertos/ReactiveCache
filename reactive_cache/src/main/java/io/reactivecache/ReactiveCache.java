@@ -16,6 +16,7 @@
 
 package io.reactivecache;
 
+import io.reactivex.Observable;
 import io.rx_cache.MigrationCache;
 import io.rx_cache.internal.DaggerRxCacheComponent;
 import io.rx_cache.internal.Locale;
@@ -25,7 +26,6 @@ import io.victoralbertos.jolyglot.JolyglotGenerics;
 import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.List;
-import rx.Observable;
 
 public final class ReactiveCache {
   private final ProcessorProviders processorProviders;

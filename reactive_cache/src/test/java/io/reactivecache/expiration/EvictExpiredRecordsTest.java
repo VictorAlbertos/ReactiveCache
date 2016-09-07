@@ -29,7 +29,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runners.MethodSorters;
-import rx.observers.TestSubscriber;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -50,7 +49,6 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
 
       createObservableMocks()
@@ -58,8 +56,8 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
                     .lifeCache(1, TimeUnit.MILLISECONDS)
                     .withKey(key)
                     .readWithLoader())
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));
@@ -77,15 +75,14 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>provider()
               .withKey(key)
               .readWithLoader()
           )
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));
@@ -102,16 +99,16 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
 
     for (int i = 0; i < 50; i++) {
       waitTime(50);
-      TestSubscriber<List<Mock>> subscriber = new TestSubscriber<>();
       String key = System.currentTimeMillis() + i + "";
+
       createObservableMocks()
           .compose(reactiveCache.<List<Mock>>provider()
               .encrypt(true)
               .lifeCache(1, TimeUnit.MILLISECONDS)
               .withKey(key)
               .readWithLoader())
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertNotEquals(0, getSizeMB(temporaryFolder.getRoot()));

@@ -1,11 +1,11 @@
 package io.reactivecache;
 
+import io.reactivex.Observable;
+import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -28,30 +28,26 @@ public final class ReactiveCacheTest {
     ProviderGroup<Mock> provider2 = reactiveCache.<Mock>providerGroup()
         .withKey("2");
 
-    TestSubscriber<Mock> subscriber = new TestSubscriber<>();
     Observable.just(new Mock())
         .compose(provider1.replace())
-        .subscribe(subscriber);
-    subscriber.awaitTerminalEvent();
-
+        .test()
+        .awaitTerminalEvent();
 
     for (int i = 0; i < 50; i++) {
-      subscriber = new TestSubscriber<>();
       Observable.just(new Mock())
           .compose(provider2.replace(i))
-          .subscribe(subscriber);
-      subscriber.awaitTerminalEvent();
+          .test()
+          .awaitTerminalEvent();
     }
 
     assertThat(temporaryFolder.getRoot().listFiles().length, is(51));
 
-    TestSubscriber<Void> evictSubscriber = new TestSubscriber<>();
-    reactiveCache.evictAll().subscribe(evictSubscriber);
-    evictSubscriber.awaitTerminalEvent();
+    TestObserver<Void> observer = reactiveCache.evictAll().test();
+    observer.awaitTerminalEvent();
 
-    evictSubscriber.assertCompleted();
-    evictSubscriber.assertNoErrors();
-    evictSubscriber.assertValueCount(1);
+    observer.assertComplete();
+    observer.assertNoErrors();
+    observer.assertNoValues();
 
     assertThat(temporaryFolder.getRoot().listFiles().length, is(0));
   }

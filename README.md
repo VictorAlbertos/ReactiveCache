@@ -29,7 +29,7 @@ Add to app module *gradle.build* file
 dependencies {
     compile 'com.github.VictorAlbertos:ReactiveCache:0.0.4-2.x'
     compile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
-    compile 'io.reactivex:rxjava:1.1.8'
+    compile 'io.reactivex.rxjava2:rxjava:2.0.0-RC1'
 }
 ```
 

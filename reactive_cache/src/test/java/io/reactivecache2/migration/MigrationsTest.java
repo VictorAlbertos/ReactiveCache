@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.reactivecache.migration;
+package io.reactivecache2.migration;
 
-import io.reactivecache.Jolyglot$;
-import io.reactivecache.ReactiveCache;
+import io.reactivecache2.Jolyglot$;
+import io.reactivecache2.ReactiveCache;
 import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
-import io.rx_cache.MigrationCache;
-import io.rx_cache.RxCacheException;
+import io.rx_cache2.MigrationCache;
+import io.rx_cache2.RxCacheException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

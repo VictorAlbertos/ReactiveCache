@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
-import io.rx_cache.Reply;
-import io.rx_cache.RxCacheException;
-import io.rx_cache.Source;
+import io.rx_cache2.Reply;
+import io.rx_cache2.RxCacheException;
+import io.rx_cache2.Source;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,17 +30,17 @@ import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public final class ProviderGroupTest {
+public final class ProviderTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private ReactiveCache reactiveCache;
-  private ProviderGroup<Mock> cacheProvider;
-  private static final String MESSAGE_GROUP = "MESSAGE_GROUP";
+  private Provider<Mock> cacheProvider;
+  private static final String MESSAGE = "0";
 
   @Before public void setUp() {
     reactiveCache = new ReactiveCache.Builder()
         .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
 
-    cacheProvider = reactiveCache.<Mock>providerGroup()
+    cacheProvider = reactiveCache.<Mock>provider()
         .withKey("mock");
   }
 
@@ -53,21 +53,9 @@ public final class ProviderGroupTest {
     observer.assertComplete();
   }
 
-  @Test public void When_Evict_By_Group_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
-    observer.awaitTerminalEvent();
-
-    observer.assertNoErrors();
-    observer.assertValueCount(1);
-    observer.assertComplete();
-  }
-
   @Test public void When_Evict_With_Cached_Data_Then_Evict_Data() {
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
-
-    saveMock(MESSAGE_GROUP+2);
-    verifyMockCached(MESSAGE_GROUP+2);
+    saveMock();
+    verifyMockCached();
 
     TestObserver<Object> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
@@ -76,26 +64,7 @@ public final class ProviderGroupTest {
     observer.assertValueCount(1);
     observer.assertComplete();
 
-    verifyNoMockCached(MESSAGE_GROUP);
-    verifyNoMockCached(MESSAGE_GROUP+2);
-  }
-
-  @Test public void When_Evict_By_Group_With_Cached_Data_Then_Evict_Data() {
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
-
-    saveMock(MESSAGE_GROUP+2);
-    verifyMockCached(MESSAGE_GROUP+2);
-
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
-    observer.awaitTerminalEvent();
-
-    observer.assertNoErrors();
-    observer.assertValueCount(1);
-    observer.assertComplete();
-
-    verifyNoMockCached(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP+2);
+    verifyNoMockCached();
   }
 
   @Test public void When_Evict_With_Cached_And_Use_Expired_Data_Then_Evict_Data() {
@@ -103,14 +72,11 @@ public final class ProviderGroupTest {
         .useExpiredDataWhenNoLoaderAvailable()
         .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
 
-    cacheProvider = reactiveCache.<Mock>providerGroup()
+    cacheProvider = reactiveCache.<Mock>provider()
         .withKey("mock");
 
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
-
-    saveMock(MESSAGE_GROUP+2);
-    verifyMockCached(MESSAGE_GROUP+2);
+    saveMock();
+    verifyMockCached();
 
     TestObserver<Object> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
@@ -119,56 +85,30 @@ public final class ProviderGroupTest {
     observer.assertValueCount(1);
     observer.assertComplete();
 
-    verifyNoMockCached(MESSAGE_GROUP);
-    verifyNoMockCached(MESSAGE_GROUP+2);
-  }
-
-  @Test public void When_Evict_By_Group_With_Cached_And_Use_Expired_Data_Then_Evict_Data() {
-    reactiveCache = new ReactiveCache.Builder()
-        .useExpiredDataWhenNoLoaderAvailable()
-        .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
-
-    cacheProvider = reactiveCache.<Mock>providerGroup()
-        .withKey("mock");
-
-    saveMock(MESSAGE_GROUP+2);
-    verifyMockCached(MESSAGE_GROUP+2);
-
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
-
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
-    observer.awaitTerminalEvent();
-
-    observer.assertNoErrors();
-    observer.assertValueCount(1);
-    observer.assertComplete();
-
-    verifyNoMockCached(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP+2);
+    verifyNoMockCached();
   }
 
   @Test public void When_Replace_But_Loader_Throws_Then_Do_Not_Replace_Cache() {
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
+    saveMock();
+    verifyMockCached();
 
     TestObserver<Mock> observer = Observable.<Mock>error(new RuntimeException())
-        .compose(cacheProvider.replace(MESSAGE_GROUP))
+        .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();
 
     observer.assertError(RuntimeException.class);
     observer.assertNoValues();
 
-    verifyMockCached(MESSAGE_GROUP);
+    verifyMockCached();
   }
 
   @Test public void When_Replace_Then_Replace_Cache() {
-    saveMock(MESSAGE_GROUP);
-    verifyMockCached(MESSAGE_GROUP);
+    saveMock();
+    verifyMockCached();
 
     TestObserver<Mock> observer = Observable.just(new Mock("1"))
-        .compose(cacheProvider.replace(MESSAGE_GROUP))
+        .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();
 
@@ -176,7 +116,7 @@ public final class ProviderGroupTest {
     observer.assertNoErrors();
     observer.assertComplete();
 
-    observer = cacheProvider.read(MESSAGE_GROUP).test();
+    observer = cacheProvider.read().test();
     observer.awaitTerminalEvent();
 
     observer.assertValueCount(1);
@@ -187,7 +127,8 @@ public final class ProviderGroupTest {
   }
 
   @Test public void When_Read_With_Nothing_To_Read_Then_Throw() {
-    TestObserver<Mock> observer = cacheProvider.read(MESSAGE_GROUP).test();
+    TestObserver<Mock> observer = cacheProvider.read().test();
+    ;
     observer.awaitTerminalEvent();
 
     observer.assertError(RxCacheException.class);
@@ -195,39 +136,39 @@ public final class ProviderGroupTest {
   }
 
   @Test public void When_Read_Then_Return_Data() {
-    saveMock(MESSAGE_GROUP);
+    saveMock();
 
-    TestObserver<Mock> observer = cacheProvider.read(MESSAGE_GROUP).test();
+    TestObserver<Mock> observer = cacheProvider.read().test();
     observer.awaitTerminalEvent();
 
     observer.assertValueCount(1);
     observer.assertNoErrors();
     observer.assertComplete();
     assertThat(observer.values()
-        .get(0).getMessage(), is(MESSAGE_GROUP));
+        .get(0).getMessage(), is(MESSAGE));
   }
 
   @Test public void Verify_Read_With_Loader() {
-    cacheProvider = reactiveCache.<Mock>providerGroup()
+    cacheProvider = reactiveCache.<Mock>provider()
         .lifeCache(100, TimeUnit.MILLISECONDS)
         .withKey("ephemeralMock");
 
-    saveMock(MESSAGE_GROUP);
+    saveMock();
 
     TestObserver<Mock> observer = Observable.just(new Mock("1"))
-        .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
+        .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
     observer.assertValueCount(1);
     assertThat(observer.values()
-        .get(0).getMessage(), is(MESSAGE_GROUP));
+        .get(0).getMessage(), is(MESSAGE));
 
     waitTime(200);
 
     observer = Observable.just(new Mock("1"))
-        .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
+        .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
 
@@ -237,7 +178,7 @@ public final class ProviderGroupTest {
         .get(0).getMessage(), is("1"));
 
     observer = Observable.just(new Mock("3"))
-        .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
+        .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
 
@@ -248,14 +189,14 @@ public final class ProviderGroupTest {
   }
 
   @Test public void Verify_Read_As_Reply_With_Loader() {
-    cacheProvider = reactiveCache.<Mock>providerGroup()
+    cacheProvider = reactiveCache.<Mock>provider()
         .lifeCache(100, TimeUnit.MILLISECONDS)
         .withKey("ephemeralMock");
 
-    saveMock(MESSAGE_GROUP);
+    saveMock();
 
-    TestObserver<Reply<Mock>> observer = Observable.just(new Mock(MESSAGE_GROUP))
-        .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
+    TestObserver<Reply<Mock>> observer = Observable.just(new Mock(MESSAGE))
+        .compose(cacheProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
 
@@ -266,8 +207,8 @@ public final class ProviderGroupTest {
 
     waitTime(200);
 
-    observer = Observable.just(new Mock(MESSAGE_GROUP))
-        .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
+    observer = Observable.just(new Mock(MESSAGE))
+        .compose(cacheProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
 
@@ -277,67 +218,25 @@ public final class ProviderGroupTest {
         .get(0).getSource(), is(Source.CLOUD));
   }
 
-  @Test public void Verify_Pagination() {
-    ProviderGroup<Mock> mockProvider = reactiveCache.<Mock>providerGroup()
-        .withKey("mocks");
-
-    TestObserver<Mock> observer;
-
-    Mock mockPage1 = new Mock("1");
-
-    observer = Observable.just(mockPage1)
-        .compose(mockProvider.replace("1"))
-        .test();
-
-    observer.awaitTerminalEvent();
-
-    Mock mockPage2 = new Mock("2");
-
-    observer = Observable.just(mockPage2)
-        .compose(mockProvider.replace("2"))
-        .test();
-
-    observer.awaitTerminalEvent();
-
-    Mock mockPage3 = new Mock("3");
-
-    observer = Observable.just(mockPage3)
-        .compose(mockProvider.replace("3"))
+  private void saveMock() {
+    TestObserver<Mock> observer = Observable.just(new Mock(MESSAGE))
+        .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();
-
-    observer = mockProvider.read("1").test();
-    observer.awaitTerminalEvent();
-    assertThat(observer.values().get(0).getMessage(), is("1"));
-
-    observer = mockProvider.read("2").test();
-    observer.awaitTerminalEvent();
-    assertThat(observer.values().get(0).getMessage(), is("2"));
-
-    observer = mockProvider.read("3").test();
-    observer.awaitTerminalEvent();
-    assertThat(observer.values().get(0).getMessage(), is("3"));
   }
 
-  private void saveMock(String messageGroup) {
-    Observable.just(new Mock(messageGroup))
-        .compose(cacheProvider.replace(messageGroup))
-        .test()
-        .awaitTerminalEvent();
-  }
-
-  private void verifyMockCached(String messageGroup) {
-    TestObserver<Mock> observer = cacheProvider.read(messageGroup).test();
+  private void verifyMockCached() {
+    TestObserver<Mock> observer = cacheProvider.read().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
     observer.assertValueCount(1);
     assertThat(observer.values()
-        .get(0).getMessage(), is(messageGroup));
+        .get(0).getMessage(), is(MESSAGE));
   }
 
-  private void verifyNoMockCached(String group) {
-    TestObserver<Mock> observer = cacheProvider.read(group).test();
+  private void verifyNoMockCached() {
+    TestObserver<Mock> observer = cacheProvider.read().test();
     observer.awaitTerminalEvent();
 
     observer.assertError(RxCacheException.class);
@@ -352,6 +251,4 @@ public final class ProviderGroupTest {
       e.printStackTrace();
     }
   }
-
-
 }

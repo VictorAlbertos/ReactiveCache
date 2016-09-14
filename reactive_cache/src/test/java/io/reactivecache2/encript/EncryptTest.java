@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package io.reactivecache.encript;
+package io.reactivecache2.encript;
 
-import io.reactivecache.Jolyglot$;
-import io.reactivecache.Mock;
-import io.reactivecache.Provider;
-import io.reactivecache.ReactiveCache;
+import io.reactivecache2.Jolyglot$;
+import io.reactivecache2.Mock;
+import io.reactivecache2.Provider;
+import io.reactivecache2.ReactiveCache;
 import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
-import io.rx_cache.Reply;
-import io.rx_cache.Source;
+import io.rx_cache2.Reply;
+import io.rx_cache2.Source;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Before;

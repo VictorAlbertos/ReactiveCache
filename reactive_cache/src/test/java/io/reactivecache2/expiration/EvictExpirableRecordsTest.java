@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package io.reactivecache.expiration;
+package io.reactivecache2.expiration;
 
-import io.reactivecache.Jolyglot$;
-import io.reactivecache.Mock;
-import io.reactivecache.ReactiveCache;
-import io.reactivecache.common.BaseTestEvictingTask;
-import io.rx_cache.internal.cache.EvictExpirableRecordsPersistence;
+import io.reactivecache2.Jolyglot$;
+import io.reactivecache2.Mock;
+import io.reactivecache2.ReactiveCache;
+import io.reactivecache2.common.BaseTestEvictingTask;
+import io.rx_cache2.internal.cache.EvictExpirableRecordsPersistence;
 import java.util.List;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -33,9 +33,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public final class EvictExpirableRecordsGroupTest extends BaseTestEvictingTask {
+public final class EvictExpirableRecordsTest extends BaseTestEvictingTask {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private final static String GROUP = "GROUP";
+
   private ReactiveCache reactiveCache;
   private int maxMgPersistenceCache = 7;
 
@@ -53,9 +53,9 @@ public final class EvictExpirableRecordsGroupTest extends BaseTestEvictingTask {
       String key = i + "";
 
       createObservableMocks()
-          .compose(reactiveCache.<List<Mock>>providerGroup()
+          .compose(reactiveCache.<List<Mock>>provider()
               .withKey(key)
-              .readWithLoader(GROUP))
+              .readWithLoader())
           .test()
           .awaitTerminalEvent();
     }
@@ -73,10 +73,10 @@ public final class EvictExpirableRecordsGroupTest extends BaseTestEvictingTask {
       waitTime(50);
       String key = i + "";
       createObservableMocks()
-          .compose(reactiveCache.<List<Mock>>providerGroup()
+          .compose(reactiveCache.<List<Mock>>provider()
               .expirable(false)
               .withKey(key)
-              .readWithLoader(GROUP))
+              .readWithLoader())
           .test()
           .awaitTerminalEvent();
     }

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.reactivecache.common;
+package io.reactivecache2.common;
 
-import io.reactivecache.Mock;
+import io.reactivecache2.Mock;
 import io.reactivex.Observable;
 import java.io.File;
 import java.util.ArrayList;

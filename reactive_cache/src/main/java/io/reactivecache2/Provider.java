@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
-import io.rx_cache.ConfigProvider;
-import io.rx_cache.EvictDynamicKey;
-import io.rx_cache.Reply;
-import io.rx_cache.internal.ProcessorProviders;
+import io.rx_cache2.ConfigProvider;
+import io.rx_cache2.EvictDynamicKey;
+import io.rx_cache2.Reply;
+import io.rx_cache2.internal.ProcessorProviders;
 import java.util.concurrent.TimeUnit;
 
 /**

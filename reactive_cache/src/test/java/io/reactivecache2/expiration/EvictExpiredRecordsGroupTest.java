@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package io.reactivecache.expiration;
+package io.reactivecache2.expiration;
 
-import io.reactivecache.Jolyglot$;
-import io.reactivecache.Mock;
-import io.reactivecache.ReactiveCache;
-import io.reactivecache.common.BaseTestEvictingTask;
+import io.reactivecache2.Jolyglot$;
+import io.reactivecache2.Mock;
+import io.reactivecache2.ReactiveCache;
+import io.reactivecache2.common.BaseTestEvictingTask;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +34,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
+public final class EvictExpiredRecordsGroupTest extends BaseTestEvictingTask {
   @ClassRule public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private final static String GROUP = "GROUP";
   private ReactiveCache reactiveCache;
 
   @Before public void setUp() {
@@ -52,10 +53,10 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
       String key = System.currentTimeMillis() + i + "";
 
       createObservableMocks()
-          .compose(reactiveCache.<List<Mock>>provider()
+          .compose(reactiveCache.<List<Mock>>providerGroup()
                     .lifeCache(1, TimeUnit.MILLISECONDS)
                     .withKey(key)
-                    .readWithLoader())
+                    .readWithLoader(GROUP))
           .test()
           .awaitTerminalEvent();
     }
@@ -77,9 +78,9 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
       waitTime(50);
       String key = System.currentTimeMillis() + i + "";
       createObservableMocks()
-          .compose(reactiveCache.<List<Mock>>provider()
+          .compose(reactiveCache.<List<Mock>>providerGroup()
               .withKey(key)
-              .readWithLoader()
+              .readWithLoader(GROUP)
           )
           .test()
           .awaitTerminalEvent();
@@ -100,13 +101,12 @@ public final class EvictExpiredRecordsTest extends BaseTestEvictingTask {
     for (int i = 0; i < 50; i++) {
       waitTime(50);
       String key = System.currentTimeMillis() + i + "";
-
       createObservableMocks()
-          .compose(reactiveCache.<List<Mock>>provider()
+          .compose(reactiveCache.<List<Mock>>providerGroup()
               .encrypt(true)
               .lifeCache(1, TimeUnit.MILLISECONDS)
               .withKey(key)
-              .readWithLoader())
+              .readWithLoader(GROUP))
           .test()
           .awaitTerminalEvent();
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import java.io.File;
 import java.security.InvalidParameterException;

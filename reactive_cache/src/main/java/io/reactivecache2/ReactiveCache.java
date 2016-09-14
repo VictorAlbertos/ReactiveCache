@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.reactivex.Observable;
-import io.rx_cache.MigrationCache;
-import io.rx_cache.internal.DaggerRxCacheComponent;
-import io.rx_cache.internal.Locale;
-import io.rx_cache.internal.ProcessorProviders;
-import io.rx_cache.internal.RxCacheModule;
+import io.rx_cache2.MigrationCache;
+import io.rx_cache2.internal.DaggerRxCacheComponent;
+import io.rx_cache2.internal.Locale;
+import io.rx_cache2.internal.ProcessorProviders;
+import io.rx_cache2.internal.RxCacheModule;
 import io.victoralbertos.jolyglot.JolyglotGenerics;
 import java.io.File;
 import java.security.InvalidParameterException;

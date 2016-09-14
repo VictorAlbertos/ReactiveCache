@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 public final class Mock {
   private String message;

@@ -1,4 +1,4 @@
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.victoralbertos.jolyglot.JolyglotGenerics;
 import io.victoralbertos.jolyglot.MoshiSpeaker;

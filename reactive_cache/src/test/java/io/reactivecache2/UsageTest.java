@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.reactivex.Observable;
 import io.reactivex.observers.TestObserver;
-import io.rx_cache.Reply;
-import io.rx_cache.Source;
+import io.rx_cache2.Reply;
+import io.rx_cache2.Source;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package io.reactivecache;
+package io.reactivecache2;
 
 import io.reactivex.exceptions.CompositeException;
-import io.rx_cache.RxCacheException;
+import io.rx_cache2.RxCacheException;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;

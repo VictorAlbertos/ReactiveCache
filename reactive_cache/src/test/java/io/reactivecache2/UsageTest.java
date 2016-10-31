@@ -288,7 +288,7 @@ public final class UsageTest {
           .flatMap(ignore -> cacheProvider.read())
           .flatMapIterable(tasks -> tasks)
           .filter(task -> task.getId() != id)
-          .toList()
+          .toList().toObservable()
           .compose(cacheProvider.replace())
           .flatMap(ignore -> Observable.just(0));
     }

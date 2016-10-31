@@ -44,7 +44,7 @@ final class ExceptionAdapter {
     return Observable.just(((CompositeException)error).getExceptions())
         .flatMapIterable(errors -> errors)
         .filter(e -> !(e instanceof PlaceHolderLoader))
-        .toList()
+        .toList().toObservable()
         .flatMap(curatedErrors -> {
           if (curatedErrors.size() == 1) return Observable.error(curatedErrors.get(0));
           else return Observable.error(new CompositeException(curatedErrors));

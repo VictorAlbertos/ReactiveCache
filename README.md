@@ -1,3 +1,5 @@
+## [DISCLAIMER] Branch 1.x will not be any longer actively maintained. Upgrade to RxJava 2.x asap.
+
 [![Build Status](https://travis-ci.org/VictorAlbertos/ReactiveCache.svg?branch=master)](https://travis-ci.org/VictorAlbertos/ReactiveCache)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ReactiveCache-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4002)
 

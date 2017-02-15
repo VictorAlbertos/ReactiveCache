@@ -1,6 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'maven'
+group='com.github.VictorAlbertos'
+version='0.0.7-1.x'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -12,7 +14,7 @@ buildscript {
   }
 
   dependencies {
-    classpath "me.tatarka:gradle-retrolambda:3.2.5"
+    classpath "me.tatarka:gradle-retrolambda:3.5.0"
   }
 }
 
@@ -32,10 +34,10 @@ artifacts {
 }
 
 dependencies {
-  compile "com.github.VictorAlbertos.RxCache:core:1.6.8-2.x"
+  compile "com.github.VictorAlbertos.RxCache:core:1.7.0-2.x"
   compile 'com.github.VictorAlbertos.Jolyglot:api:0.0.3'
 
-  retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.3.0'
+  retrolambdaConfig 'net.orfjackal.retrolambda:retrolambda:2.5.0'
 
   testCompile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
   testCompile 'com.github.VictorAlbertos.Jolyglot:jackson:0.0.3'

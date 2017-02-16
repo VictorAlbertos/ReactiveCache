@@ -44,6 +44,39 @@ public final class ProviderTest {
         .withKey("mock");
   }
 
+  @Test public void When_useExpiredDataWhenNoLoaderAvailable_Then_Retrieve_Expired_Data() {
+    reactiveCache = new ReactiveCache.Builder()
+        .useExpiredDataWhenNoLoaderAvailable()
+        .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
+
+    cacheProvider = reactiveCache.<Mock>provider()
+        .lifeCache(100, TimeUnit.MILLISECONDS)
+        .withKey("mock");
+
+    saveMock();
+    verifyMockCached();
+
+    waitTime(300);
+
+    verifyMockCached();
+  }
+
+  @Test public void When_Not_useExpiredDataWhenNoLoaderAvailable_Then_Throw() {
+    reactiveCache = new ReactiveCache.Builder()
+        .using(temporaryFolder.getRoot(), Jolyglot$.newInstance());
+
+    cacheProvider = reactiveCache.<Mock>provider()
+        .lifeCache(100, TimeUnit.MILLISECONDS)
+        .withKey("mock");
+
+    saveMock();
+    verifyMockCached();
+
+    waitTime(300);
+
+    verifyNoMockCached();
+  }
+
   @Test public void When_Evict_With_No_Cached_Data_Then_Do_Not_Throw() {
     TestObserver<Object> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();

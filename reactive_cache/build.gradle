@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'maven'
 group='com.github.VictorAlbertos'
-version='0.0.7-2.x'
+version='1.0.0-2.x'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

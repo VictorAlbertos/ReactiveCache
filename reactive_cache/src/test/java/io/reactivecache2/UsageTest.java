@@ -16,7 +16,8 @@
 
 package io.reactivecache2;
 
-import io.reactivex.Observable;
+import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.rx_cache2.Reply;
 import io.rx_cache2.Source;
@@ -71,12 +72,12 @@ public final class UsageTest {
     observerProfile.assertComplete();
     assertNotNull(observerProfile.values().get(0));
 
-    TestObserver<User> observerUpdate = userRepository.updateUserName("aNewName").test();
+    TestObserver<Void> observerUpdate = userRepository.updateUserName("aNewName").test();
     observerUpdate.awaitTerminalEvent();
 
     observerUpdate.assertComplete();
     observerUpdate.assertNoErrors();
-    observerUpdate.assertValueCount(1);
+    observerUpdate.assertNoValues();
 
     observerProfile = userRepository.profile().test();
     observerProfile.awaitTerminalEvent();
@@ -87,11 +88,11 @@ public final class UsageTest {
     assertNotNull(observerProfile.values().get(0).getName(),
         is("aNewName"));
 
-    TestObserver<Object> observerLogout = userRepository.logout().test();
+    TestObserver<Void> observerLogout = userRepository.logout().test();
     observerLogout.awaitTerminalEvent();
 
     observerLogout.assertNoErrors();
-    observerLogout.assertValueCount(1);
+    observerLogout.assertNoValues();
     observerLogout.assertComplete();
 
     observerIsLogged = userRepository.isLogged().test();
@@ -132,12 +133,12 @@ public final class UsageTest {
     assertThat(observerTasks.values().get(0).getData().size(),
         is(0));
 
-    TestObserver<Object> observerAddTask = tasksRepository.addTask("", "").test();
+    TestObserver<Void> observerAddTask = tasksRepository.addTask("", "").test();
     observerAddTask.awaitTerminalEvent();
 
     observerAddTask.assertComplete();
     observerAddTask.assertNoErrors();
-    observerAddTask.assertValueCount(1);
+    observerAddTask.assertNoValues();
 
     observerTasks = tasksRepository.tasks(false).test();
     observerTasks.awaitTerminalEvent();
@@ -148,11 +149,11 @@ public final class UsageTest {
     assertThat(observerTasks.values().get(0).getSource(), is(Source.MEMORY));
     assertThat(observerTasks.values().get(0).getData().size(), is(1));
 
-    TestObserver<Object> observerRemoveTask = tasksRepository.removeTask(1).test();
+    TestObserver<Void> observerRemoveTask = tasksRepository.removeTask(1).test();
 
     observerRemoveTask.assertComplete();
     observerRemoveTask.assertNoErrors();
-    observerRemoveTask.assertValueCount(1);
+    observerRemoveTask.assertNoValues();
 
     observerTasks = tasksRepository.tasks(false).test();
     observerTasks.awaitTerminalEvent();
@@ -229,30 +230,33 @@ public final class UsageTest {
           .withKey("user");
     }
 
-    Observable<User> login(String email) {
+    Single<User> login(String email) {
       return api.loginUser(email)
           .compose(cacheProvider.replace());
     }
 
-    Observable<Boolean> isLogged() {
+    Single<Boolean> isLogged() {
       return cacheProvider.read()
           .map(user -> true)
           .onErrorReturn(observer -> false);
     }
 
-    Observable<User> profile() {
+    Single<User> profile() {
       return cacheProvider.read();
     }
 
-    Observable<User> updateUserName(String name) {
+    Completable updateUserName(String name) {
       return cacheProvider.read()
-          .doOnNext(user -> user.setName(name))
-          .compose(cacheProvider.replace());
+          .map(user -> {
+            user.setName(name);
+            return user;
+          })
+          .compose(cacheProvider.replace())
+          .toCompletable();
     }
 
-    Observable<Object> logout() {
-      return api.logout()
-          .flatMap(i -> cacheProvider.evict());
+    Completable logout() {
+      return api.logout().andThen(cacheProvider.evict());
     }
   }
 
@@ -269,28 +273,30 @@ public final class UsageTest {
           .withKey("tasks");
     }
 
-    Observable<Reply<List<Task>>> tasks(boolean refresh) {
+    Single<Reply<List<Task>>> tasks(boolean refresh) {
       return refresh ? api.tasks().compose(cacheProvider.replaceAsReply())
           : api.tasks().compose(cacheProvider.readWithLoaderAsReply());
     }
 
-    Observable<Object> addTask(String name, String desc) {
-      return api.addTask(name, desc)
-          .flatMap(newTask ->
-              cacheProvider.read()
-                  .doOnNext(tasks -> tasks.add(newTask)))
+    Completable addTask(String name, String desc) {
+      return api.addTask(1, name, desc)
+          .andThen(cacheProvider.read()
+              .map(tasks -> {
+                tasks.add(new Task(1));
+                return tasks;
+              }))
           .compose(cacheProvider.replace())
-          .flatMap(ignore -> Observable.just(0));
+          .toCompletable();
     }
 
-    Observable<Object> removeTask(int id) {
+    Completable removeTask(int id) {
       return api.removeTask(id)
-          .flatMap(ignore -> cacheProvider.read())
+          .andThen(cacheProvider.read().toObservable())
           .flatMapIterable(tasks -> tasks)
           .filter(task -> task.getId() != id)
-          .toList().toObservable()
+          .toList()
           .compose(cacheProvider.replace())
-          .flatMap(ignore -> Observable.just(0));
+          .toCompletable();
     }
   }
 
@@ -307,7 +313,7 @@ public final class UsageTest {
           .withKey("events");
     }
 
-    Observable<Reply<List<Event>>> events(boolean refresh, int page) {
+    Single<Reply<List<Event>>> events(boolean refresh, int page) {
       if (refresh) {
         return apiEvents.events(page)
             .compose(cacheProvider.replaceAsReply(page));
@@ -331,11 +337,10 @@ public final class UsageTest {
   }
 
   private static class Task {
-    private static int COUNTER;
     private final int id;
 
-    public Task() {
-      this.id = ++COUNTER;
+    public Task(int id) {
+      this.id = id;
     }
 
     public int getId() {
@@ -349,12 +354,12 @@ public final class UsageTest {
 
   private static class ApiUser {
 
-    public Observable<User> loginUser(String email) {
-      return Observable.just(new User());
+    public Single<User> loginUser(String email) {
+      return Single.just(new User());
     }
 
-    public Observable<Object> logout() {
-      return Observable.just(0);
+    public Completable logout() {
+      return Completable.complete();
     }
   }
 
@@ -365,23 +370,23 @@ public final class UsageTest {
       this.tasks = new ArrayList<>();
     }
 
-    public Observable<List<Task>> tasks() {
-      return Observable.just(new ArrayList<>(tasks));
+    public Single<List<Task>> tasks() {
+      return Single.just(new ArrayList<>(tasks));
     }
 
-    public Observable<Task> addTask(String name, String desc) {
-      Task task = new Task();
+    public Completable addTask(int id, String name, String desc) {
+      Task task = new Task(id);
       tasks.add(task);
-      return Observable.just(task);
+      return Completable.complete();
     }
 
-    public Observable<Object> removeTask(int id) {
+    public Completable removeTask(int id) {
       Task candidate = null;
       for (Task task : tasks) {
         if (task.getId() == id) candidate = task;
       }
       tasks.remove(candidate);
-      return Observable.just(0);
+      return Completable.complete();
     }
   }
 
@@ -391,8 +396,8 @@ public final class UsageTest {
       put(2, Arrays.asList(new Event(), new Event()));
     }};
 
-    public Observable<List<Event>> events(int page) {
-      return Observable.just(events.get(page));
+    public Single<List<Event>> events(int page) {
+      return Single.just(events.get(page));
     }
   }
 }

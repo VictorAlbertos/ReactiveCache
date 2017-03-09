@@ -16,7 +16,7 @@
 
 package io.reactivecache2;
 
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.rx_cache2.Reply;
 import io.rx_cache2.RxCacheException;
@@ -78,11 +78,11 @@ public final class ProviderTest {
   }
 
   @Test public void When_Evict_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
   }
 
@@ -90,11 +90,11 @@ public final class ProviderTest {
     saveMock();
     verifyMockCached();
 
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached();
@@ -111,11 +111,11 @@ public final class ProviderTest {
     saveMock();
     verifyMockCached();
 
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached();
@@ -125,7 +125,7 @@ public final class ProviderTest {
     saveMock();
     verifyMockCached();
 
-    TestObserver<Mock> observer = Observable.<Mock>error(new RuntimeException())
+    TestObserver<Mock> observer = Single.<Mock>error(new RuntimeException())
         .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();
@@ -140,7 +140,7 @@ public final class ProviderTest {
     saveMock();
     verifyMockCached();
 
-    TestObserver<Mock> observer = Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Single.just(new Mock("1"))
         .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();
@@ -188,7 +188,7 @@ public final class ProviderTest {
 
     saveMock();
 
-    TestObserver<Mock> observer = Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Single.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
@@ -200,7 +200,7 @@ public final class ProviderTest {
 
     waitTime(200);
 
-    observer = Observable.just(new Mock("1"))
+    observer = Single.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
@@ -210,7 +210,7 @@ public final class ProviderTest {
     assertThat(observer.values()
         .get(0).getMessage(), is("1"));
 
-    observer = Observable.just(new Mock("3"))
+    observer = Single.just(new Mock("3"))
         .compose(cacheProvider.readWithLoader())
         .test();
     observer.awaitTerminalEvent();
@@ -228,7 +228,7 @@ public final class ProviderTest {
 
     saveMock();
 
-    TestObserver<Reply<Mock>> observer = Observable.just(new Mock(MESSAGE))
+    TestObserver<Reply<Mock>> observer = Single.just(new Mock(MESSAGE))
         .compose(cacheProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
@@ -240,7 +240,7 @@ public final class ProviderTest {
 
     waitTime(200);
 
-    observer = Observable.just(new Mock(MESSAGE))
+    observer = Single.just(new Mock(MESSAGE))
         .compose(cacheProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
@@ -252,7 +252,7 @@ public final class ProviderTest {
   }
 
   private void saveMock() {
-    TestObserver<Mock> observer = Observable.just(new Mock(MESSAGE))
+    TestObserver<Mock> observer = Single.just(new Mock(MESSAGE))
         .compose(cacheProvider.replace())
         .test();
     observer.awaitTerminalEvent();

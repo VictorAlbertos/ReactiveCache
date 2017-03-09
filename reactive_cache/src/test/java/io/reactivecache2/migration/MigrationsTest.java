@@ -18,7 +18,7 @@ package io.reactivecache2.migration;
 
 import io.reactivecache2.Jolyglot$;
 import io.reactivecache2.ReactiveCache;
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.rx_cache2.MigrationCache;
 import io.rx_cache2.RxCacheException;
@@ -75,14 +75,14 @@ public final class MigrationsTest {
   }
 
   private static int SIZE_MOCKS = 1000;
-  private Observable<List<Mock1>> getMocks() {
+  private Single<List<Mock1>> getMocks() {
     List<Mock1> mocks = new ArrayList<>();
 
     for (int i = 0; i < SIZE_MOCKS; i++) {
       mocks.add(new Mock1());
     }
 
-    return Observable.just(mocks);
+    return Single.just(mocks);
   }
 
   public static class Mock1 {

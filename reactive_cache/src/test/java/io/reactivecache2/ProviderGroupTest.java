@@ -16,7 +16,7 @@
 
 package io.reactivecache2;
 
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.rx_cache2.Reply;
 import io.rx_cache2.RxCacheException;
@@ -45,20 +45,20 @@ public final class ProviderGroupTest {
   }
 
   @Test public void When_Evict_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
   }
 
   @Test public void When_Evict_By_Group_With_No_Cached_Data_Then_Do_Not_Throw() {
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    TestObserver<Void> observer = cacheProvider.evict(MESSAGE_GROUP).test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
   }
 
@@ -69,11 +69,11 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
@@ -87,11 +87,11 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    TestObserver<Void> observer = cacheProvider.evict(MESSAGE_GROUP).test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
@@ -112,11 +112,11 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP+2);
     verifyMockCached(MESSAGE_GROUP+2);
 
-    TestObserver<Object> observer = cacheProvider.evict().test();
+    TestObserver<Void> observer = cacheProvider.evict().test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
@@ -137,11 +137,11 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestObserver<Object> observer = cacheProvider.evict(MESSAGE_GROUP).test();
+    TestObserver<Void> observer = cacheProvider.evict(MESSAGE_GROUP).test();
     observer.awaitTerminalEvent();
 
     observer.assertNoErrors();
-    observer.assertValueCount(1);
+    observer.assertNoValues();
     observer.assertComplete();
 
     verifyNoMockCached(MESSAGE_GROUP);
@@ -152,7 +152,7 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestObserver<Mock> observer = Observable.<Mock>error(new RuntimeException())
+    TestObserver<Mock> observer = Single.<Mock>error(new RuntimeException())
         .compose(cacheProvider.replace(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -167,7 +167,7 @@ public final class ProviderGroupTest {
     saveMock(MESSAGE_GROUP);
     verifyMockCached(MESSAGE_GROUP);
 
-    TestObserver<Mock> observer = Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Single.just(new Mock("1"))
         .compose(cacheProvider.replace(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -214,7 +214,7 @@ public final class ProviderGroupTest {
 
     saveMock(MESSAGE_GROUP);
 
-    TestObserver<Mock> observer = Observable.just(new Mock("1"))
+    TestObserver<Mock> observer = Single.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -226,7 +226,7 @@ public final class ProviderGroupTest {
 
     waitTime(200);
 
-    observer = Observable.just(new Mock("1"))
+    observer = Single.just(new Mock("1"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -236,7 +236,7 @@ public final class ProviderGroupTest {
     assertThat(observer.values()
         .get(0).getMessage(), is("1"));
 
-    observer = Observable.just(new Mock("3"))
+    observer = Single.just(new Mock("3"))
         .compose(cacheProvider.readWithLoader(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -254,7 +254,7 @@ public final class ProviderGroupTest {
 
     saveMock(MESSAGE_GROUP);
 
-    TestObserver<Reply<Mock>> observer = Observable.just(new Mock(MESSAGE_GROUP))
+    TestObserver<Reply<Mock>> observer = Single.just(new Mock(MESSAGE_GROUP))
         .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -266,7 +266,7 @@ public final class ProviderGroupTest {
 
     waitTime(200);
 
-    observer = Observable.just(new Mock(MESSAGE_GROUP))
+    observer = Single.just(new Mock(MESSAGE_GROUP))
         .compose(cacheProvider.readWithLoaderAsReply(MESSAGE_GROUP))
         .test();
     observer.awaitTerminalEvent();
@@ -285,7 +285,7 @@ public final class ProviderGroupTest {
 
     Mock mockPage1 = new Mock("1");
 
-    observer = Observable.just(mockPage1)
+    observer = Single.just(mockPage1)
         .compose(mockProvider.replace("1"))
         .test();
 
@@ -293,7 +293,7 @@ public final class ProviderGroupTest {
 
     Mock mockPage2 = new Mock("2");
 
-    observer = Observable.just(mockPage2)
+    observer = Single.just(mockPage2)
         .compose(mockProvider.replace("2"))
         .test();
 
@@ -301,7 +301,7 @@ public final class ProviderGroupTest {
 
     Mock mockPage3 = new Mock("3");
 
-    observer = Observable.just(mockPage3)
+    observer = Single.just(mockPage3)
         .compose(mockProvider.replace("3"))
         .test();
     observer.awaitTerminalEvent();
@@ -320,7 +320,7 @@ public final class ProviderGroupTest {
   }
 
   private void saveMock(String messageGroup) {
-    Observable.just(new Mock(messageGroup))
+    Single.just(new Mock(messageGroup))
         .compose(cacheProvider.replace(messageGroup))
         .test()
         .awaitTerminalEvent();

@@ -17,7 +17,7 @@
 package io.reactivecache2.common;
 
 import io.reactivecache2.Mock;
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class BaseTestEvictingTask {
         return  (int) Math.ceil(bytes/1024.0/1024.0);
     }
 
-    protected Observable<List<Mock>> createObservableMocks() {
+    protected Single<List<Mock>> createObservableMocks() {
         List<Mock> mocks = new ArrayList();
 
         for (int i = 0; i < 100; i++) {
@@ -74,6 +74,6 @@ public class BaseTestEvictingTask {
             mocks.add(mock);
         }
 
-        return Observable.just(mocks);
+        return Single.just(mocks);
     }
 }

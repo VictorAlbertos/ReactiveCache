@@ -20,7 +20,7 @@ import io.reactivecache2.Jolyglot$;
 import io.reactivecache2.Mock;
 import io.reactivecache2.Provider;
 import io.reactivecache2.ReactiveCache;
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.rx_cache2.Reply;
 import io.rx_cache2.Source;
@@ -56,12 +56,12 @@ public final class EncryptTest {
   }
 
   @Test public void _00_Save_Record_On_Disk_In_Order_To_Test_Following_Tests() {
-    TestObserver<Reply<List<Mock>>> observer = createObservableMocks(SIZE)
+    TestObserver<Reply<List<Mock>>> observer = createSingleMocks(SIZE)
         .compose(mocksEncryptedProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
 
-    observer = createObservableMocks(SIZE)
+    observer = createSingleMocks(SIZE)
         .compose(mocksNoEncryptedProvider.readWithLoaderAsReply())
         .test();
 
@@ -69,7 +69,7 @@ public final class EncryptTest {
   }
 
   @Test public void _01_When_Encrypted_Record_Has_Been_Persisted_And_Memory_Has_Been_Destroyed_Then_Retrieve_From_Disk() {
-    TestObserver<Reply<List<Mock>>> observer = Observable.<List<Mock>>just(new ArrayList<>())
+    TestObserver<Reply<List<Mock>>> observer = Single.<List<Mock>>just(new ArrayList<>())
         .compose(mocksEncryptedProvider.readWithLoaderAsReply())
         .test();
     observer.awaitTerminalEvent();
@@ -80,7 +80,7 @@ public final class EncryptTest {
   }
 
   @Test public void _02_Verify_Encrypted_Does_Not_Propagate_To_Other_Providers() {
-    TestObserver<Reply<List<Mock>>> observer = createObservableMocks(SIZE)
+    TestObserver<Reply<List<Mock>>> observer = createSingleMocks(SIZE)
         .compose(mocksEncryptedProvider.readWithLoaderAsReply())
         .test();
 
@@ -90,7 +90,7 @@ public final class EncryptTest {
     assertThat(reply.getSource(), is(Source.PERSISTENCE));
     assertThat(reply.isEncrypted(), is(true));
 
-    observer = createObservableMocks(SIZE)
+    observer = createSingleMocks(SIZE)
         .compose(mocksNoEncryptedProvider.readWithLoaderAsReply())
         .test();
 
@@ -102,7 +102,7 @@ public final class EncryptTest {
   }
 
 
-  private Observable<List<Mock>> createObservableMocks(int size) {
+  private Single<List<Mock>> createSingleMocks(int size) {
     long currentTime = System.currentTimeMillis();
 
     List<Mock> mocks = new ArrayList(size);
@@ -110,6 +110,6 @@ public final class EncryptTest {
       mocks.add(new Mock("mock"+currentTime));
     }
 
-    return Observable.just(mocks);
+    return Single.just(mocks);
   }
 }

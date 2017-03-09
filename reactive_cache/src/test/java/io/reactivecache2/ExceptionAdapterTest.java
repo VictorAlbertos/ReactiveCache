@@ -54,7 +54,7 @@ public final class ExceptionAdapterTest {
   @Test public void When_Exception_Is_RxCache_Exception_Then_Return_Completable() {
     exceptionAdapter.completeOnRxCacheLoaderError(new RxCacheException(""))
         .test()
-        .assertValueCount(1)
+        .assertNoValues()
         .assertNoErrors()
         .assertComplete();
   }
@@ -65,7 +65,7 @@ public final class ExceptionAdapterTest {
 
     exceptionAdapter.completeOnRxCacheLoaderError(compositeException)
         .test()
-        .assertValueCount(1)
+        .assertNoValues()
         .assertNoErrors()
         .assertComplete();
   }

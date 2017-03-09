@@ -16,39 +16,41 @@
 
 package io.reactivecache2;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.exceptions.CompositeException;
 import io.rx_cache2.RxCacheException;
 
 final class ExceptionAdapter {
 
-  Observable<Object> completeOnRxCacheLoaderError(Throwable error) {
+  Completable completeOnRxCacheLoaderError(Throwable error) {
     if (error instanceof CompositeException) {
       for (Throwable e: ((CompositeException) error).getExceptions()) {
-        if (e instanceof RxCacheException) return Observable.just(0);
+        if (e instanceof RxCacheException) return Completable.complete();
       }
     }
 
-    if (error instanceof RxCacheException) return Observable.just(0);
+    if (error instanceof RxCacheException) return Completable.complete();
 
-    return Observable.error(error);
+    return Completable.error(error);
   }
 
   <E> Observable<E> placeholderLoader() {
     return Observable.error(new PlaceHolderLoader());
   }
 
-  <E> Observable<E> stripPlaceholderLoaderException(Throwable error) {
-    if (!(error instanceof CompositeException)) return Observable.error(error);
+  <E> Single<E> stripPlaceholderLoaderException(Throwable error) {
+    if (!(error instanceof CompositeException)) return Single.error(error);
 
-    return Observable.just(((CompositeException)error).getExceptions())
+    return Single.fromObservable(Observable.just(((CompositeException)error).getExceptions())
         .flatMapIterable(errors -> errors)
         .filter(e -> !(e instanceof PlaceHolderLoader))
         .toList().toObservable()
         .flatMap(curatedErrors -> {
           if (curatedErrors.size() == 1) return Observable.error(curatedErrors.get(0));
           else return Observable.error(new CompositeException(curatedErrors));
-        });
+        }));
   }
 
   static class PlaceHolderLoader extends Exception {

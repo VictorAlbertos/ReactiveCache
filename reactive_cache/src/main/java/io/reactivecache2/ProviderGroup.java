@@ -16,8 +16,10 @@
 
 package io.reactivecache2;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.ObservableTransformer;
+import io.reactivex.Single;
+import io.reactivex.SingleTransformer;
 import io.rx_cache2.ConfigProvider;
 import io.rx_cache2.EvictDynamicKey;
 import io.rx_cache2.EvictDynamicKeyGroup;
@@ -42,80 +44,77 @@ public final class ProviderGroup<T> {
   /**
    * Evict all the cached data for this provider.
    */
-  public final Observable<Object> evict() {
-    return Observable.defer(() -> builder.processorProviders
-        .process(getConfigProvider(Observable.error(new RuntimeException()), "",
-            new EvictDynamicKey(true), false, false))
-        .onErrorResumeNext(throwable -> {
-          return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
-        })
+  public final Completable evict() {
+    return Completable.defer(() ->
+        Completable.fromObservable(builder.processorProviders
+            .process(getConfigProvider(Observable.error(new RuntimeException()), "",
+                new EvictDynamicKey(true), false, false)))
+            .onErrorResumeNext(exceptionAdapter::completeOnRxCacheLoaderError)
     );
   }
 
   /**
    * Evict the cached data by group.
    */
-  public final Observable<Object> evict(final Object group) {
-    return Observable.defer(() -> builder.processorProviders
-        .process(getConfigProvider(Observable.error(new RuntimeException()), group.toString(),
-            new EvictDynamicKeyGroup(true), false, false))
-        .onErrorResumeNext(throwable -> {
-          return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
-        })
+  public final Completable evict(final Object group) {
+    return Completable.defer(() ->
+        Completable.fromObservable(builder.processorProviders
+            .process(getConfigProvider(Observable.error(new RuntimeException()), group.toString(),
+                new EvictDynamicKeyGroup(true), false, false)))
+            .onErrorResumeNext(exceptionAdapter::completeOnRxCacheLoaderError)
     );
   }
 
   /**
-   * Replace the cached data by group based on the element emitted from the observable.
+   * Replace the cached data by group based on the element emitted from the loader.
    */
-  public final ObservableTransformer<T, T> replace(final Object group) {
+  public final SingleTransformer<T, T> replace(final Object group) {
     return loader ->
-        loader.flatMap(data -> builder.processorProviders
+        loader.flatMap(data -> Single.fromObservable(builder.processorProviders
             .process(getConfigProvider(Observable.just(data), group.toString(),
-                new EvictDynamicKeyGroup(true), false, null)));
+                new EvictDynamicKeyGroup(true), false, null))));
   }
 
   /**
    * Read from cache by group and throw if no data is available.
    */
-  public final Observable<T> read(final Object group) {
-    return Observable.defer(() -> builder.processorProviders
-        .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(), group.toString(),
-            new EvictDynamicKeyGroup(false), false, null)))
-        .onErrorResumeNext(error -> {
-          return exceptionAdapter.stripPlaceholderLoaderException(error);
-        });
+  public final Single<T> read(final Object group) {
+    return Single.defer(() ->
+        Single.fromObservable(builder.processorProviders
+            .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(), group.toString(),
+                new EvictDynamicKeyGroup(false), false, null))))
+        .onErrorResumeNext(exceptionAdapter::stripPlaceholderLoaderException);
   }
 
   /**
    * Read from cache by group but if there is not data available then read from the loader and cache
    * its element.
    */
-  public final ObservableTransformer<T, T> readWithLoader(final Object group) {
-    return loader -> builder.processorProviders
-        .process(getConfigProvider(loader, group.toString(),
-            new EvictDynamicKeyGroup(false), false, null));
+  public final SingleTransformer<T, T> readWithLoader(final Object group) {
+    return loader -> Single.fromObservable(builder.processorProviders
+        .process(getConfigProvider(loader.toObservable(), group.toString(),
+            new EvictDynamicKeyGroup(false), false, null)));
   }
 
   /**
    * Same as {@link ProviderGroup#replace(Object)} but wrap the data in a Reply object for debug
    * purposes.
    */
-  public final ObservableTransformer<T, Reply<T>> replaceAsReply(final Object group) {
+  public final SingleTransformer<T, Reply<T>> replaceAsReply(final Object group) {
     return loader ->
-        loader.flatMap(data -> builder.processorProviders
+        loader.flatMap(data -> Single.fromObservable(builder.processorProviders
             .process(getConfigProvider(Observable.just(data), group.toString(),
-                new EvictDynamicKeyGroup(true), true, null)));
+                new EvictDynamicKeyGroup(true), true, null))));
   }
 
   /**
    * Same as {@link ProviderGroup#readWithLoader(Object)} but wrap the data in a Reply object for
    * debug purposes.
    */
-  public final ObservableTransformer<T, Reply<T>> readWithLoaderAsReply(final Object group) {
-    return loader -> builder.processorProviders
-        .process(getConfigProvider(loader, group.toString(), new EvictDynamicKeyGroup(false),
-            true, null));
+  public final SingleTransformer<T, Reply<T>> readWithLoaderAsReply(final Object group) {
+    return loader -> Single.fromObservable(builder.processorProviders
+        .process(getConfigProvider(loader.toObservable(), group.toString(), new EvictDynamicKeyGroup(false),
+            true, null)));
   }
 
   private ConfigProvider getConfigProvider(Observable<T> loader, String group,

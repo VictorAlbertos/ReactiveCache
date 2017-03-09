@@ -16,8 +16,10 @@
 
 package io.reactivecache2;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.ObservableTransformer;
+import io.reactivex.Single;
+import io.reactivex.SingleTransformer;
 import io.rx_cache2.ConfigProvider;
 import io.rx_cache2.EvictDynamicKey;
 import io.rx_cache2.Reply;
@@ -41,65 +43,64 @@ public final class Provider<T> {
   /**
    * Evict all the cached data for this provider.
    */
-  public final Observable<Object> evict() {
-    return Observable.defer(() ->
-        builder.processorProviders
+  public final Completable evict() {
+    return Completable.defer(() ->
+        Completable.fromObservable(builder.processorProviders
             .process(getConfigProvider(Observable.error(new RuntimeException()),
-                new EvictDynamicKey(true), false, false))
-            .onErrorResumeNext(throwable -> {
-              return exceptionAdapter.completeOnRxCacheLoaderError(throwable);
-            })
+                new EvictDynamicKey(true), false, false)))
+            .onErrorResumeNext(exceptionAdapter::completeOnRxCacheLoaderError)
     );
   }
 
   /**
-   * Replace the cached data by the element emitted from the observable.
+   * Replace the cached data by the element emitted from the loader.
    */
-  public final ObservableTransformer<T, T> replace() {
+  public final SingleTransformer<T, T> replace() {
     return loader ->
-        loader.flatMap(data -> builder.processorProviders
+        loader.flatMap(data -> Single.fromObservable(builder.processorProviders
             .process(getConfigProvider(Observable.just(data),
-                new EvictDynamicKey(true), false, null)));
+                new EvictDynamicKey(true), false, null))));
   }
 
   /**
    * Read from cache and throw if no data is available.
    */
-  public final Observable<T> read() {
-    return Observable.defer(() -> builder.processorProviders
-        .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(),
-            new EvictDynamicKey(false), false, null)))
-        .onErrorResumeNext(error -> {
-          return exceptionAdapter.stripPlaceholderLoaderException(error);
-        });
+  public final Single<T> read() {
+    return Single.defer(() ->
+        Single.fromObservable(builder.processorProviders
+            .<T>process(getConfigProvider(exceptionAdapter.placeholderLoader(),
+                new EvictDynamicKey(false), false, null))))
+        .onErrorResumeNext(exceptionAdapter::stripPlaceholderLoaderException);
   }
 
   /**
    * Read from cache but if there is not data available then read from the loader and cache its
    * element.
    */
-  public final ObservableTransformer<T, T> readWithLoader() {
-    return loader -> builder.processorProviders
-        .process(getConfigProvider(loader, new EvictDynamicKey(false), false, null));
+  public final SingleTransformer<T, T> readWithLoader() {
+    return loader ->
+        Single.fromObservable(builder.processorProviders
+            .process(getConfigProvider(loader.toObservable(),
+                new EvictDynamicKey(false), false, null)));
   }
 
   /**
    * Same as {@link Provider#replace()} but wrap the data in a Reply object for debug purposes.
    */
-  public final ObservableTransformer<T, Reply<T>> replaceAsReply() {
+  public final SingleTransformer<T, Reply<T>> replaceAsReply() {
     return loader ->
-        loader.flatMap(data -> builder.processorProviders
-            .process(getConfigProvider(Observable.just(data),
-                new EvictDynamicKey(true), true, null)));
+        loader.flatMap(data -> Single.fromObservable(builder.processorProviders
+            .process(getConfigProvider(Observable.just(data), new EvictDynamicKey(true), true,
+                null))));
   }
 
   /**
    * Same as {@link Provider#readWithLoader()} but wrap the data in a Reply object for debug
    * purposes.
    */
-  public final ObservableTransformer<T, Reply<T>> readWithLoaderAsReply() {
-    return loader -> builder.processorProviders
-        .process(getConfigProvider(loader, new EvictDynamicKey(false), true, null));
+  public final SingleTransformer<T, Reply<T>> readWithLoaderAsReply() {
+    return loader -> Single.fromObservable(builder.processorProviders
+        .process(getConfigProvider(loader.toObservable(), new EvictDynamicKey(false), true, null)));
   }
 
   private ConfigProvider getConfigProvider(Observable<T> loader,

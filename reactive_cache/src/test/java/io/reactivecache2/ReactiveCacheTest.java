@@ -1,6 +1,6 @@
 package io.reactivecache2;
 
-import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,13 +28,13 @@ public final class ReactiveCacheTest {
     ProviderGroup<Mock> provider2 = reactiveCache.<Mock>providerGroup()
         .withKey("2");
 
-    Observable.just(new Mock())
+    Single.just(new Mock())
         .compose(provider1.replace())
         .test()
         .awaitTerminalEvent();
 
     for (int i = 0; i < 50; i++) {
-      Observable.just(new Mock())
+      Single.just(new Mock())
           .compose(provider2.replace(i))
           .test()
           .awaitTerminalEvent();

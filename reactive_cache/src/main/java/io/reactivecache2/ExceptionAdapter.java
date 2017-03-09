@@ -21,6 +21,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.exceptions.CompositeException;
 import io.rx_cache2.RxCacheException;
+import java.util.ArrayList;
+import java.util.List;
 
 final class ExceptionAdapter {
 
@@ -51,6 +53,12 @@ final class ExceptionAdapter {
           if (curatedErrors.size() == 1) return Observable.error(curatedErrors.get(0));
           else return Observable.error(new CompositeException(curatedErrors));
         }));
+  }
+
+
+  <T> Single<List<T>> emptyListIfRxCacheException(Throwable error) {
+    if (error instanceof RxCacheException) return Single.just(new ArrayList<T>());
+    else return Single.error(error);
   }
 
   static class PlaceHolderLoader extends Exception {

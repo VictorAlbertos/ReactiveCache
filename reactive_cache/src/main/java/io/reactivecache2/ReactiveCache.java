@@ -49,12 +49,30 @@ public final class ReactiveCache {
   }
 
   /**
+   * Return a {@link ProviderList.ProviderBuilderList} to build the provider.
+   *
+   * @param <T> the type of data to be cached.
+   */
+  public <T> ProviderList.ProviderBuilderList<T> providerList() {
+    return new ProviderList.ProviderBuilderList<>(processorProviders);
+  }
+
+  /**
    * Return a {@link ProviderGroup.ProviderBuilder} to build the provider group.
    *
    * @param <T> the type of data to be cached.
    */
   public <T> ProviderGroup.ProviderBuilder<T> providerGroup() {
     return new ProviderGroup.ProviderBuilder<>(processorProviders);
+  }
+
+  /**
+   * Return a {@link ProviderGroupList.ProviderBuilder} to build the provider.
+   *
+   * @param <T> the type of data to be cached.
+   */
+  public <T> ProviderGroupList.ProviderBuilderList<T> providerGroupList() {
+    return new ProviderGroupList.ProviderBuilderList<>(processorProviders);
   }
 
   /**

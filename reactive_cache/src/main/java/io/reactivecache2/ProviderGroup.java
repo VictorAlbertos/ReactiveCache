@@ -32,9 +32,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <T> The type of the data to persist.
  */
-public final class ProviderGroup<T> {
+public class ProviderGroup<T> {
   private final ProviderBuilder<T> builder;
-  private final ExceptionAdapter exceptionAdapter;
+  protected final ExceptionAdapter exceptionAdapter;
 
   ProviderGroup(ProviderBuilder<T> builder) {
     this.builder = builder;
@@ -129,7 +129,7 @@ public final class ProviderGroup<T> {
   }
 
   public static class ProviderBuilder<T> {
-    private String key;
+    protected String key;
     private boolean encrypted, expirable;
     private Long duration;
     private TimeUnit timeUnit;
@@ -169,9 +169,9 @@ public final class ProviderGroup<T> {
     /**
      * Same as {@link Provider.ProviderBuilder#withKey(Object)}
      */
-    public ProviderGroup<T> withKey(Object key) {
+    public <R extends ProviderGroup<T>> R withKey(Object key) {
       this.key = key.toString();
-      return new ProviderGroup<>(this);
+      return (R) new ProviderGroup<>(this);
     }
   }
 }

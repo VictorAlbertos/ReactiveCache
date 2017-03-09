@@ -16,7 +16,7 @@
 
 package io.reactivecache2;
 
-import io.reactivex.Observable;
+import io.reactivex.Completable;
 import io.rx_cache2.MigrationCache;
 import io.rx_cache2.internal.DaggerRxCacheComponent;
 import io.rx_cache2.internal.Locale;
@@ -60,8 +60,8 @@ public final class ReactiveCache {
   /**
    * Evict all the cached data.
    */
-  public Observable<Void> evictAll() {
-    return processorProviders.evictAll();
+  public Completable evictAll() {
+    return Completable.fromObservable(processorProviders.evictAll());
   }
 
   /**

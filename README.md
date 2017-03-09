@@ -153,21 +153,21 @@ Every function exposed through `actions` return a `Completable` which must be su
 ```java
 actions.addFirst(new Model())
 
-//Add a new mock at 5 position
+//Add a new element at 5 position
 actions.add((position, count) -> position == 5, new Model())
 
 //Evict first element if the cache has already 300 records
 actions.evictFirst(count -> count > 300)
 
-//Update the mock with id 5
-actions.update(mock -> mock.getId() == 5, mock -> {
+//Update the element with id 5
+actions.update(model -> model.getId() == 5, model -> {
     mock.setActive();
     return mock;
 })
 
-//Update all inactive mocks
-actions.updateIterable(mock -> mock.isInactive(), mock -> {
-    mock.setActive();
+//Update all inactive modelds
+actions.updateIterable(model -> model.isInactive(), model -> {
+    model.setActive();
     return mock;
 })
 ```
@@ -302,7 +302,7 @@ ReactiveCache reactiveCache = new ReactiveCache.Builder()
         .using(application.getFilesDir(), new GsonSpeaker());
 ```
 
-### <a name="config_providers"></a> Config provider and P
+### <a name="config_providers"></a> Config provider
 
 When building `Provider`, `ProviderList`, `ProviderGroup` or `ProviderGroupList` the next configuration is available thought the builder:
 

@@ -188,7 +188,7 @@ class TasksRepository {
     return api.addTask(1, name, desc)
         .andThen(cacheProvider.read()
             .map(tasks -> {
-              tasks.add(new Task(1));
+              tasks.add(new Task(1, name, desc));
               return tasks;
             }))
         .compose(cacheProvider.replace())

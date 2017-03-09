@@ -220,11 +220,11 @@ public final class UsageTest {
   /**
    * Managing user session.
    */
-  static class UserRepository {
+  private static class UserRepository {
     private final Provider<User> cacheProvider;
     private final ApiUser api;
 
-    UserRepository(ApiUser api, ReactiveCache reactiveCache) {
+    private UserRepository(ApiUser api, ReactiveCache reactiveCache) {
       this.api = api;
       this.cacheProvider = reactiveCache.<User>provider()
           .withKey("user");
@@ -263,13 +263,13 @@ public final class UsageTest {
   /**
    * Managing tasks.
    */
-  static class TasksRepository {
-    private final Provider<List<Task>> cacheProvider;
+  private static class TasksRepository {
+    private final ProviderList<Task> cacheProvider;
     private final ApiTasks api;
 
-    TasksRepository(ApiTasks api, ReactiveCache reactiveCache) {
+    private TasksRepository(ApiTasks api, ReactiveCache reactiveCache) {
       this.api = api;
-      this.cacheProvider = reactiveCache.<List<Task>>provider()
+      this.cacheProvider = reactiveCache.<Task>providerList()
           .withKey("tasks");
     }
 
@@ -280,34 +280,25 @@ public final class UsageTest {
 
     Completable addTask(String name, String desc) {
       return api.addTask(1, name, desc)
-          .andThen(cacheProvider.read()
-              .map(tasks -> {
-                tasks.add(new Task(1));
-                return tasks;
-              }))
-          .compose(cacheProvider.replace())
-          .toCompletable();
+          .andThen(cacheProvider.entries()
+              .addFirst(new Task(1)));
     }
 
     Completable removeTask(int id) {
       return api.removeTask(id)
-          .andThen(cacheProvider.read().toObservable())
-          .flatMapIterable(tasks -> tasks)
-          .filter(task -> task.getId() != id)
-          .toList()
-          .compose(cacheProvider.replace())
-          .toCompletable();
+          .andThen(cacheProvider.entries()
+              .evict((position, count, element) -> element.getId() == id));
     }
   }
 
   /**
    * Managing events feed with pagination.
    */
-  static class EventsRepository {
+  private static class EventsRepository {
     private final ProviderGroup<List<Event>> cacheProvider;
     private final ApiEvents apiEvents;
 
-    EventsRepository(ApiEvents apiEvents, ReactiveCache reactiveCache) {
+    private EventsRepository(ApiEvents apiEvents, ReactiveCache reactiveCache) {
       this.apiEvents = apiEvents;
       this.cacheProvider = reactiveCache.<List<Event>>providerGroup()
           .withKey("events");

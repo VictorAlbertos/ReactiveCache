@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <T> The type of the data to persist.
  */
-public final class Provider<T> {
+public class Provider<T> {
   private final ProviderBuilder<T> builder;
-  private final ExceptionAdapter exceptionAdapter;
+  protected final ExceptionAdapter exceptionAdapter;
 
   Provider(ProviderBuilder<T> builder) {
     this.builder = builder;
@@ -115,7 +115,7 @@ public final class Provider<T> {
   }
 
   public static class ProviderBuilder<T> {
-    private String key;
+    protected String key;
     private boolean encrypted, expirable;
     private Long duration;
     private TimeUnit timeUnit;
@@ -159,9 +159,9 @@ public final class Provider<T> {
     /**
      * Set the key for the provider.
      */
-    public Provider<T> withKey(Object key) {
+    public <R extends Provider<T>> R withKey(Object key) {
       this.key = key.toString();
-      return new Provider<>(this);
+      return (R) new Provider<>(this);
     }
   }
 }

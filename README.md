@@ -12,6 +12,7 @@ The act of caching data with **ReactiveCache** is just another transformation in
 * Data **encryption**.
 * Customizable disk **cache size limit**.
 * **Migrations** to evict data by `Type` between releases.
+* A complete set of [**built-in functions**](#built-in) to perform **write operations easily** using `List`, such as `addFirst`, `evictLast`, `addAll` and so on.
 
 ## SetUp
 Add to top level *gradle.build* file
@@ -27,7 +28,7 @@ allprojects {
 Add to app module *gradle.build* file
 ```gradle
 dependencies {
-    compile 'com.github.VictorAlbertos:ReactiveCache:1.0.0-2.x'
+    compile 'com.github.VictorAlbertos:ReactiveCache:1.1.0-2.x'
     compile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
     compile 'io.reactivex.rxjava2:rxjava:2.0.4'
 }
@@ -49,8 +50,7 @@ ReactiveCache reactiveCache = new ReactiveCache.Builder()
 cacheProvider.evictAll()
 ```
 
-
-### Provider
+### <a name="provider"></a> Provider
 
 Call `reactiveCache#provider()` to create a `Provider` to manage cache operations. The builder offers some [additional configurations](#config_providers).
 
@@ -118,8 +118,92 @@ cacheProvider.evict(group)
 cacheProvider.evict()
 ```
 
-## Use cases
+## <a name="built-in"></a> Built-in functions for writing operations
 
+When the data is encoded as type `List<Model>`, you may use `ProviderList` and `ProviderGroupList`. Both clases inherit from their base clase (`Provider` and `ProviderGroup` respectively), so -[besides exposing all their base funcionality](#provider)- they offer a supletory api to perform write operations.
+
+Call `reactiveCache#providerList()` to create a `ProviderList`.
+
+```java
+ProviderList<Model> cacheProvider =
+		reactiveCache.<Model>providerList()
+        .withKey("models");
+```
+
+Or call `reactiveCache#providerGroupList()` to create a `ProviderGroupList`.
+
+```java
+ProviderGroupList<Model> cacheProviderGroup =
+		reactiveCache.<Model>providerGroupList()
+        .withKey("modelsPaginated");
+```
+
+Both **`cacheProvider.entries()`** and **`cacheProviderGroup.entries(group)`** return an `ActionsList<Model>` instance which allows to easily operate with the cached data thought a whole set of functions.
+
+```java
+ActionsList<Model> actions = cacheProvider.entries();
+```
+
+```java
+ActionsList<Model> actions = cacheProviderGroup.entries(group);
+```
+
+Every function exposed through `actions` return a `Completable` which must be subscribed to in order to consume the action. Follow some examples:
+
+```java
+actions.addFirst(new Model())
+
+//Add a new mock at 5 position
+actions.add((position, count) -> position == 5, new Model())
+
+//Evict first element if the cache has already 300 records
+actions.evictFirst(count -> count > 300)
+
+//Update the mock with id 5
+actions.update(mock -> mock.getId() == 5, mock -> {
+    mock.setActive();
+    return mock;
+})
+
+//Update all inactive mocks
+actions.updateIterable(mock -> mock.isInactive(), mock -> {
+    mock.setActive();
+    return mock;
+})
+```
+
+<details>
+<summary>Next table summarizes the available functions (click to expand)</summary>
+| method | description |
+| --- | --- |
+| add(func2, element) | Func2 will be called for every iteration until its condition returns true. When true, the element is added to the cache at the position of the current iteration
+| addFirst(element) | Add the object at the first position of the cache
+| addLast(element) | Add the object at the last position of the cache
+| addAllFirst(elements) | Add the objects at the first position of the cache
+| addAllLast(elements) | Add the objects at the last position of the cache
+| addAll(func2, elements) | Func2 will be called for every iteration until its condition returns true. When true, the elements are added to the cache at the position of the current iteration
+| evictFirst() | Evict object at the first position of the cache
+| evictFirstN(n) | Evict as much objects as requested by n param starting from the first position
+| evictLast() | Evict object at the last position of the cache
+| evictLastN(n) | Evict as much objects as requested by n param starting from the last position
+| evictLast() | Evict object at the last position of the cache
+| evictFirst(func1Count) | Evict object at the first position of the cache. func1Count exposes the count of elements in the cache
+| evictFirstN(func1Count, n) | Evict as much objects as requested by n param starting from the first position. func1Count exposes the count of elements in the cache
+| evictLast(func1Count) | Evict object at the last position of the cache. func1Count exposes the count of elements in the cache
+| evictLastN(func1Count, n) | Evict as much objects as requested by n param starting from the last position. func1Count exposes the count of elements in the cache
+| evict(func1) | Func1 will be called for every iteration until its condition returns true. When true, the element of the current iteration is evicted from the cache.
+| evict(func3) | Func3 will be called for every iteration until its condition returns true. When true, the element of the current iteration is evicted from the cache. func3 exposes the position of the current iteration, the count of elements in the cache and the element of the current iteration.
+| evictAllKeepingFirstN(n) | Evict elements from the cache starting from the first position until its count is equal to the value specified in n param.
+| evictAllKeepingLastN(n) | Evict elements from the cache starting from the last position until its count is equal to the value specified in n param.
+| evictIterable(func3) | Func3 will be called for every iteration. When true, the element of the current iteration is evicted from the cache. func3 exposes the position of the current iteration, the count of elements in the cache and the element of the current iteration.
+| update(func1, replace) | Func1 will be called for every iteration until its condition returns true. When true, the element of the current iteration is updated. func1 exposes the element of the current iteration. replace exposes the original element and expects back the one modified.
+| update(func3, replace) | Func3 will be called for every iteration until its condition returns true. When true, the element of the current iteration is updated. func3 exposes the position of the current iteration, the count of elements in the cache and the element of the current iteration. replace exposes the original element and expects back the one modified.
+| updateIterable(func1, replace) | Func1 will be called for every. When true, the element of the current iteration is updated. func1 exposes the element of the current iteration. replace exposes the original element and expects back the one modified.
+| updateIterable(func3, replace) | Func3 will be called for every iteration. When true, the element of the current iteration is updated. func3 exposes the position of the current iteration, the count of elements in the cache and the element of the current iteration. replace exposes the original element and expects back the one modified.
+
+</details>
+
+## Use cases
 
 Next examples illustrate how to use **ReactiveCache** on the *data layer* for client **Android** applications. They follow the *well-known* [repository pattern](http://fernandocejas.com/2014/09/03/architecting-android-the-clean-way/) in order to deal with data coming from a remote repository *(server)* and a local one *(ReactiveCache)*.
 
@@ -127,107 +211,98 @@ Next examples illustrate how to use **ReactiveCache** on the *data layer* for cl
 ### Simple user session.
 ```java
 class UserRepository {
-  private final Provider<User> cacheProvider;
-  private final ApiUser api;
+    private final Provider<User> cacheProvider;
+    private final ApiUser api;
 
-  UserRepository(ApiUser api, ReactiveCache reactiveCache) {
-    this.api = api;
-    this.cacheProvider = reactiveCache.<User>provider()
-        .withKey("user");
-  }
+    UserRepository(ApiUser api, ReactiveCache reactiveCache) {
+      this.api = api;
+      this.cacheProvider = reactiveCache.<User>provider()
+          .withKey("user");
+    }
 
-  Single<User> login(String email) {
-    return api.loginUser(email)
-        .compose(cacheProvider.replace());
-  }
+    Single<User> login(String email) {
+      return api.loginUser(email)
+          .compose(cacheProvider.replace());
+    }
 
-  Single<Boolean> isLogged() {
-    return cacheProvider.read()
-        .map(user -> true)
-        .onErrorReturn(observer -> false);
-  }
+    Single<Boolean> isLogged() {
+      return cacheProvider.read()
+          .map(user -> true)
+          .onErrorReturn(observer -> false);
+    }
 
-  Single<User> profile() {
-    return cacheProvider.read();
-  }
+    Single<User> profile() {
+      return cacheProvider.read();
+    }
 
-  Completable updateUserName(String name) {
-    return cacheProvider.read()
-        .map(user -> {
-          user.setName(name);
-          return user;
-        })
-        .compose(cacheProvider.replace())
-        .toCompletable();
-  }
+    Completable updateUserName(String name) {
+      return cacheProvider.read()
+          .map(user -> {
+            user.setName(name);
+            return user;
+          })
+          .compose(cacheProvider.replace())
+          .toCompletable();
+    }
 
-  Completable logout() {
-    return api.logout().andThen(cacheProvider.evict());
-  }
+    Completable logout() {
+      return api.logout().andThen(cacheProvider.evict());
+    }
 }
 ```
 
 ### Adding and removing tasks.
 ```java
 class TasksRepository {
-  private final Provider<List<Task>> cacheProvider;
-  private final ApiTasks api;
+    private final ProviderList<Task> cacheProvider;
+    private final ApiTasks api;
 
-  TasksRepository(ApiTasks api, ReactiveCache reactiveCache) {
-    this.api = api;
-    this.cacheProvider = reactiveCache.<List<Task>>provider()
-        .withKey("tasks");
-  }
+    TasksRepository(ApiTasks api, ReactiveCache reactiveCache) {
+      this.api = api;
+      this.cacheProvider = reactiveCache.<Task>providerList()
+          .withKey("tasks");
+    }
 
-  Single<Reply<List<Task>>> tasks(boolean refresh) {
-    return refresh ? api.tasks().compose(cacheProvider.replaceAsReply())
-        : api.tasks().compose(cacheProvider.readWithLoaderAsReply());
-  }
+    Single<Reply<List<Task>>> tasks(boolean refresh) {
+      return refresh ? api.tasks().compose(cacheProvider.replaceAsReply())
+          : api.tasks().compose(cacheProvider.readWithLoaderAsReply());
+    }
 
-  Completable addTask(String name, String desc) {
-    return api.addTask(1, name, desc)
-        .andThen(cacheProvider.read()
-            .map(tasks -> {
-              tasks.add(new Task(1, name, desc));
-              return tasks;
-            }))
-        .compose(cacheProvider.replace())
-        .toCompletable();
-  }
+    Completable addTask(String name, String desc) {
+      return api.addTask(1, name, desc)
+          .andThen(cacheProvider.entries()
+              .addFirst(new Task(1, name, desc)));
+    }
 
-  Completable removeTask(int id) {
-    return api.removeTask(id)
-        .andThen(cacheProvider.read().toObservable())
-        .flatMapIterable(tasks -> tasks)
-        .filter(task -> task.getId() != id)
-        .toList()
-        .compose(cacheProvider.replace())
-        .toCompletable();
-  }
+    Completable removeTask(int id) {
+      return api.removeTask(id)
+          .andThen(cacheProvider.entries()
+              .evict((position, count, element) -> element.getId() == id));
+    }
 }
 ```
 
 ### Paginated feed of events.
 ```java
 class EventsRepository {
-  private final ProviderGroup<List<Event>> cacheProvider;
-  private final ApiEvents apiEvents;
+    private final ProviderGroup<List<Event>> cacheProvider;
+    private final ApiEvents apiEvents;
 
-  EventsRepository(ApiEvents apiEvents, ReactiveCache reactiveCache) {
-    this.apiEvents = apiEvents;
-    this.cacheProvider = reactiveCache.<List<Event>>providerGroup()
-        .withKey("events");
-  }
-
-  Single<Reply<List<Event>>> events(boolean refresh, int page) {
-    if (refresh) {
-      return apiEvents.events(page)
-          .compose(cacheProvider.replaceAsReply(page));
+    EventsRepository(ApiEvents apiEvents, ReactiveCache reactiveCache) {
+      this.apiEvents = apiEvents;
+      this.cacheProvider = reactiveCache.<List<Event>>providerGroup()
+          .withKey("events");
     }
 
-    return apiEvents.events(page)
-        .compose(cacheProvider.readWithLoaderAsReply(page));
-  }
+    Single<Reply<List<Event>>> events(boolean refresh, int page) {
+      if (refresh) {
+        return apiEvents.events(page)
+            .compose(cacheProvider.replaceAsReply(page));
+      }
+
+      return apiEvents.events(page)
+          .compose(cacheProvider.readWithLoaderAsReply(page));
+    }
 }
 ```
 
@@ -257,9 +332,9 @@ ReactiveCache reactiveCache = new ReactiveCache.Builder()
         .using(application.getFilesDir(), new GsonSpeaker());
 ```
 
-### <a name="config_providers"></a> Provider and ProviderGroup
+### <a name="config_providers"></a> Config provider and P
 
-When building both `Provider` and `ProviderGroup` the next configurations are available thought the builder:
+When building `Provider`, `ProviderList`, `ProviderGroup` or `ProviderGroupList` the next configuration is available thought the builder:
 
 * **`encrypt(boolean)`** when true, the data cached by this `provider` is encrypted using the key specified in `ReactiveCache#encript(key)`. *Default value is false*.
 

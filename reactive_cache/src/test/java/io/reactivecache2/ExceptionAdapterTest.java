@@ -94,4 +94,20 @@ public final class ExceptionAdapterTest {
     assertThat(RuntimeException.class, is(equalTo(compositeErrors.get(0).getClass())));
     assertThat(RuntimeException.class, is(equalTo(compositeErrors.get(1).getClass())));
   }
+
+  @Test public void When_emptyListIfRxCacheException_RxCacheException_Then_Empty_List() {
+    exceptionAdapter.emptyListIfRxCacheException(new RxCacheException(""))
+        .test()
+        .assertNoErrors()
+        .assertValueAt(0, List::isEmpty)
+        .assertComplete();
+  }
+
+  @Test public void When_emptyListIfRxCacheException_Exception_Then_Throw() {
+    exceptionAdapter.emptyListIfRxCacheException(new RuntimeException("Fuck"))
+        .test()
+        .assertNoValues()
+        .assertNotComplete()
+        .assertErrorMessage("Fuck");
+  }
 }

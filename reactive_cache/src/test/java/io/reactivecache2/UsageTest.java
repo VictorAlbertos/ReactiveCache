@@ -263,7 +263,7 @@ public final class UsageTest {
   /**
    * Managing tasks.
    */
-  class TasksRepository {
+  static class TasksRepository {
     private final Provider<List<Task>> cacheProvider;
     private final ApiTasks api;
 
@@ -303,7 +303,7 @@ public final class UsageTest {
   /**
    * Managing events feed with pagination.
    */
-  class EventsRepository {
+  static class EventsRepository {
     private final ProviderGroup<List<Event>> cacheProvider;
     private final ApiEvents apiEvents;
 

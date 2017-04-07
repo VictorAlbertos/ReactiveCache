@@ -24,7 +24,7 @@ public final class ProviderList<T> extends Provider<List<T>> {
     super(builder);
   }
 
-  ActionsList<T> entries() {
+  public ActionsList<T> entries() {
     return ActionsList.with(elements -> elements.compose(replace()),
         read().onErrorResumeNext(exceptionAdapter::emptyListIfRxCacheException));
   }

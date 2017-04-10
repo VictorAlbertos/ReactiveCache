@@ -24,7 +24,7 @@ public final class ProviderGroupList<T> extends ProviderGroup<List<T>> {
     super(builder);
   }
 
-  ActionsList<T> entries(Object group) {
+  public ActionsList<T> entries(Object group) {
     return ActionsList.with(elements -> elements.compose(replace(group)),
         read(group).onErrorResumeNext(exceptionAdapter::emptyListIfRxCacheException));
   }

@@ -1,3 +1,5 @@
+:warning: This repository is no longer mantained consider using [RxCache](https://github.com/VictorAlbertos/RxCache) as an alternative :warning: 
+
 [![Build Status](https://travis-ci.org/VictorAlbertos/ReactiveCache.svg?branch=master)](https://travis-ci.org/VictorAlbertos/ReactiveCache)
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ReactiveCache-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4002)
 
